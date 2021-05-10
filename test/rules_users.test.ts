@@ -1,8 +1,9 @@
 import * as firebase from '@firebase/testing';
 import * as fs from 'fs';
+import { usersRef, correctUser, authedApp } from './lib/utils';
 
-const testName = 'firesbase-kpoapp';
 const rulesFilePath = 'firestore.rules';
+const testName = 'firesbase-kpoapp-2';
 
 describe(testName, () => {
   // はじめに１度ルールを読み込ませる
@@ -27,19 +28,19 @@ describe(testName, () => {
   describe('コレクションUsersのテスト', () => {
     describe('read', () => {
       test('ログインしていないユーザはreadできない', async () => {
-        const db = authedApp(null);
+        const db = authedApp(null, testName);
         const user = usersRef(db).doc('atsutomo');
         await firebase.assertFails(user.get());
       });
 
       test('ログインしていても自分のではないものはreadできない', async () => {
-        const db = authedApp({ uid: 'tabata' });
+        const db = authedApp({ uid: 'tabata' }, testName);
         const user = usersRef(db).doc('atsutomo');
         await firebase.assertFails(user.get());
       });
 
       test('ログインしていて自分のものはReadできる', async () => {
-        const db = authedApp({ uid: 'atsutomo' });
+        const db = authedApp({ uid: 'atsutomo' }, testName);
         const user = usersRef(db).doc('atsutomo');
         await firebase.assertSucceeds(user.get());
       });
@@ -48,7 +49,7 @@ describe(testName, () => {
     describe('create', () => {
       describe('成功例', () => {
         test('ログインいるユーザは自分と同IDならユーザが作成できる', async () => {
-          const db = authedApp({ uid: 'atsutomo' });
+          const db = authedApp({ uid: 'atsutomo' }, testName);
           const profile = usersRef(db).doc('atsutomo');
           const user = correctUser();
           await firebase.assertSucceeds(profile.set({ ...user }));
@@ -57,14 +58,14 @@ describe(testName, () => {
 
       describe('ログイン関係で失敗', () => {
         test('ログインしていないとユーザが作成できない', async () => {
-          const db = authedApp(null);
+          const db = authedApp(null, testName);
           const profile = usersRef(db).doc('atsutomo');
           const user = correctUser();
           await firebase.assertFails(profile.set({ ...user }));
         });
 
         test('ログインしていてもユーザIDが違うと作成できない', async () => {
-          const db = authedApp({ uid: 'tabata' });
+          const db = authedApp({ uid: 'tabata' }, testName);
           const profile = usersRef(db).doc('atsutomo');
           const user = correctUser();
           await firebase.assertFails(profile.set({ ...user }));
@@ -72,8 +73,8 @@ describe(testName, () => {
       });
 
       describe('スキーマ検証で失敗', () => {
-        test('スキーマ数が5個以外だとダメ', async () => {
-          const db = authedApp({ uid: 'atsutomo' });
+        test('パラメータ数が5個以外だとダメ', async () => {
+          const db = authedApp({ uid: 'atsutomo' }, testName);
           const profile = usersRef(db).doc('atsutomo');
           // 6個の場合
           await firebase.assertFails(
@@ -98,7 +99,7 @@ describe(testName, () => {
         });
 
         test('Agreementがboolじゃないとダメ', async () => {
-          const db = authedApp({ uid: 'atsutomo' });
+          const db = authedApp({ uid: 'atsutomo' }, testName);
           const profile = usersRef(db).doc('atsutomo');
           const user = correctUser();
           user.Agreement = 1;
@@ -106,7 +107,7 @@ describe(testName, () => {
         });
 
         test('AgreementDateがtimestampじゃないとダメ', async () => {
-          const db = authedApp({ uid: 'atsutomo' });
+          const db = authedApp({ uid: 'atsutomo' }, testName);
           const profile = usersRef(db).doc('atsutomo');
           const user = correctUser();
           user.AgreementDate = Date();
@@ -114,7 +115,7 @@ describe(testName, () => {
         });
 
         test('AuthStyleがstringじゃないとダメ', async () => {
-          const db = authedApp({ uid: 'atsutomo' });
+          const db = authedApp({ uid: 'atsutomo' }, testName);
           const profile = usersRef(db).doc('atsutomo');
           const user = correctUser();
           user.AuthStyle = 1;
@@ -122,7 +123,7 @@ describe(testName, () => {
         });
 
         test('RegistrationDateがtimestampじゃないとダメ', async () => {
-          const db = authedApp({ uid: 'atsutomo' });
+          const db = authedApp({ uid: 'atsutomo' }, testName);
           const profile = usersRef(db).doc('atsutomo');
           const user = correctUser();
           user.RegistrationDate = Date();
@@ -130,7 +131,7 @@ describe(testName, () => {
         });
 
         test('UserNameがstringじゃないとダメ', async () => {
-          const db = authedApp({ uid: 'atsutomo' });
+          const db = authedApp({ uid: 'atsutomo' }, testName);
           const profile = usersRef(db).doc('atsutomo');
           const user = correctUser();
           user.UserName = 1;
@@ -140,7 +141,7 @@ describe(testName, () => {
 
       describe('データ検証で失敗', () => {
         test('Agreementがfalseだとダメ', async () => {
-          const db = authedApp({ uid: 'atsutomo' });
+          const db = authedApp({ uid: 'atsutomo' }, testName);
           const profile = usersRef(db).doc('atsutomo');
           const user = correctUser();
           user.Agreement = false;
@@ -148,7 +149,7 @@ describe(testName, () => {
         });
 
         test('AgreementDateがサーバタイムスタンプと同じだとダメ', async () => {
-          const db = authedApp({ uid: 'atsutomo' });
+          const db = authedApp({ uid: 'atsutomo' }, testName);
           const profile = usersRef(db).doc('atsutomo');
           const user = correctUser();
           user.AgreementDate = firebase.firestore.FieldValue.serverTimestamp();
@@ -156,7 +157,7 @@ describe(testName, () => {
         });
 
         test('RegistrationDateがサーバタイムスタンプと違うとダメ', async () => {
-          const db = authedApp({ uid: 'atsutomo' });
+          const db = authedApp({ uid: 'atsutomo' }, testName);
           const profile = usersRef(db).doc('atsutomo');
           const user = correctUser();
           user.RegistrationDate = firebase.firestore.Timestamp.now();
@@ -168,7 +169,7 @@ describe(testName, () => {
     describe('update', () => {
       describe('成功例', () => {
         test('ログインいるユーザは自分と同IDならユーザ情報が更新できる', async () => {
-          const user1 = authedApp({ uid: 'atsutomo' });
+          const user1 = authedApp({ uid: 'atsutomo' }, testName);
           const profile = usersRef(user1).doc('atsutomo');
           const user = correctUser();
           await firebase.assertSucceeds(profile.set({ ...user }));
@@ -179,10 +180,10 @@ describe(testName, () => {
       });
 
       describe('ログイン関係で失敗', () => {
-        test('ログインいないユーザは更新できない', async () => {
-          const authedUser = authedApp({ uid: 'atsutomo' });
+        test('ログインしていないユーザは更新できない', async () => {
+          const authedUser = authedApp({ uid: 'atsutomo' }, testName);
           const authed = usersRef(authedUser).doc('atsutomo');
-          const anonymusUser = authedApp(null);
+          const anonymusUser = authedApp(null, testName);
           const anonymus = usersRef(anonymusUser).doc('atsutomo');
           const user = correctUser();
           await firebase.assertSucceeds(authed.set({ ...user }));
@@ -192,9 +193,9 @@ describe(testName, () => {
         });
 
         test('ログインしててもユーザIDが違うと更新できない', async () => {
-          const authedUser = authedApp({ uid: 'atsutomo' });
+          const authedUser = authedApp({ uid: 'atsutomo' }, testName);
           const authed = usersRef(authedUser).doc('atsutomo');
-          const anotherUser = authedApp({ uid: 'tabata' });
+          const anotherUser = authedApp({ uid: 'tabata' }, testName);
           const another = usersRef(anotherUser).doc('atsutomo');
           const user = correctUser();
           await firebase.assertSucceeds(authed.set({ ...user }));
@@ -206,12 +207,12 @@ describe(testName, () => {
 
       describe('スキーマ検証で失敗', () => {
         test('スキーマ数が5個じゃないとだめ', async () => {
-          const authedUser = authedApp({ uid: 'atsutomo' });
+          const authedUser = authedApp({ uid: 'atsutomo' }, testName);
           const authed = usersRef(authedUser).doc('atsutomo');
           const user = correctUser();
           await firebase.assertSucceeds(authed.set({ ...user }));
 
-          // {merge: true}がないとだめ
+          // 少ない時は{merge: true}がないとだめ
           const { RegistrationDate, ...restUser } = user;
           restUser.UserName = 'mototsua';
           await firebase.assertFails(authed.set({ ...restUser }));
@@ -223,7 +224,7 @@ describe(testName, () => {
         });
 
         test('Agreementがboolじゃないとだめ', async () => {
-          const authedUser = authedApp({ uid: 'atsutomo' });
+          const authedUser = authedApp({ uid: 'atsutomo' }, testName);
           const authed = usersRef(authedUser).doc('atsutomo');
           const user = correctUser();
           await firebase.assertSucceeds(authed.set({ ...user }));
@@ -233,7 +234,7 @@ describe(testName, () => {
         });
 
         test('AgreementDateがtimestampじゃないとだめ', async () => {
-          const authedUser = authedApp({ uid: 'atsutomo' });
+          const authedUser = authedApp({ uid: 'atsutomo' }, testName);
           const authed = usersRef(authedUser).doc('atsutomo');
           const user = correctUser();
           await firebase.assertSucceeds(authed.set({ ...user }));
@@ -243,7 +244,7 @@ describe(testName, () => {
         });
 
         test('AuthStyleがstringじゃないとだめ', async () => {
-          const authedUser = authedApp({ uid: 'atsutomo' });
+          const authedUser = authedApp({ uid: 'atsutomo' }, testName);
           const authed = usersRef(authedUser).doc('atsutomo');
           const user = correctUser();
           await firebase.assertSucceeds(authed.set({ ...user }));
@@ -253,16 +254,16 @@ describe(testName, () => {
         });
 
         test('RegistrationDateがtimestampじゃないとだめ', async () => {
-          const authedUser = authedApp({ uid: 'atsutomo' });
+          const authedUser = authedApp({ uid: 'atsutomo' }, testName);
           const authed = usersRef(authedUser).doc('atsutomo');
           const user = correctUser();
           await firebase.assertSucceeds(authed.set({ ...user }));
-          user.AgreementDate = Date();
+          user.RegistrationDate = Date();
           await firebase.assertFails(authed.set({ ...user }, { merge: true }));
         });
 
         test('UserNameがstringじゃないとだめ', async () => {
-          const authedUser = authedApp({ uid: 'atsutomo' });
+          const authedUser = authedApp({ uid: 'atsutomo' }, testName);
           const authed = usersRef(authedUser).doc('atsutomo');
           const user = correctUser();
           await firebase.assertSucceeds(authed.set({ ...user }));
@@ -274,7 +275,7 @@ describe(testName, () => {
 
       describe('データ検証で失敗', () => {
         test('Agreementがfalseだとダメ', async () => {
-          const user1 = authedApp({ uid: 'atsutomo' });
+          const user1 = authedApp({ uid: 'atsutomo' }, testName);
           const profile = usersRef(user1).doc('atsutomo');
           const user = correctUser();
           await firebase.assertSucceeds(profile.set({ ...user }));
@@ -284,7 +285,7 @@ describe(testName, () => {
         });
 
         test('AgreementDateがサーバタイムスタンプと同じだとダメ', async () => {
-          const user1 = authedApp({ uid: 'atsutomo' });
+          const user1 = authedApp({ uid: 'atsutomo' }, testName);
           const profile = usersRef(user1).doc('atsutomo');
           const user = correctUser();
           await firebase.assertSucceeds(profile.set({ ...user }));
@@ -293,8 +294,8 @@ describe(testName, () => {
           await firebase.assertFails(profile.set({ ...restUser }, { merge: true }));
         });
 
-        test('RegistrationDateがサーバタイムスタンプと違うとダメ', async () => {
-          const user1 = authedApp({ uid: 'atsutomo' });
+        test('RegistrationDateが変更されているとダメ', async () => {
+          const user1 = authedApp({ uid: 'atsutomo' }, testName);
           const profile = usersRef(user1).doc('atsutomo');
           const user = correctUser();
           await firebase.assertSucceeds(profile.set({ ...user }));
@@ -306,8 +307,8 @@ describe(testName, () => {
 
     describe('delete', () => {
       describe('成功例', () => {
-        test('ログインいるユーザは自分と同IDならユーザ情報を削除', async () => {
-          const user1 = authedApp({ uid: 'atsutomo' });
+        test('ログインいるユーザは自分と同IDならユーザ情報を削除できる', async () => {
+          const user1 = authedApp({ uid: 'atsutomo' }, testName);
           const profile = usersRef(user1).doc('atsutomo');
           const user = correctUser();
           await firebase.assertSucceeds(profile.set({ ...user }));
@@ -317,9 +318,9 @@ describe(testName, () => {
 
       describe('失敗例', () => {
         test('ログインしてないとユーザ情報削除できない', async () => {
-          const authedUser = authedApp({ uid: 'atsutomo' });
+          const authedUser = authedApp({ uid: 'atsutomo' }, testName);
           const authed = usersRef(authedUser).doc('atsutomo');
-          const anonymusUser = authedApp(null);
+          const anonymusUser = authedApp(null, testName);
           const anonymus = usersRef(anonymusUser).doc('atsutomo');
           const user = correctUser();
           await firebase.assertSucceeds(authed.set({ ...user }));
@@ -327,9 +328,9 @@ describe(testName, () => {
         });
 
         test('ログインしていてもユーザIDが違うと削除できない', async () => {
-          const authedUser = authedApp({ uid: 'atsutomo' });
+          const authedUser = authedApp({ uid: 'atsutomo' }, testName);
           const authed = usersRef(authedUser).doc('atsutomo');
-          const anotherUser = authedApp({ uid: 'tabata' });
+          const anotherUser = authedApp({ uid: 'tabata' }, testName);
           const another = usersRef(anotherUser).doc('atsutomo');
           const user = correctUser();
           await firebase.assertSucceeds(authed.set({ ...user }));
@@ -339,56 +340,3 @@ describe(testName, () => {
     });
   });
 });
-
-class AuthUser {
-  uid: string;
-
-  constructor(uid: string) {
-    this.uid = uid;
-  }
-}
-
-function authedApp(auth: AuthUser): firebase.firestore.Firestore {
-  return firebase.initializeTestApp({ projectId: testName, auth: auth }).firestore();
-}
-
-// function adminApp(): firebase.firestore.Firestore {
-//   return firebase.initializeAdminApp({ projectId: testName }).firestore();
-// }
-
-function usersRef(db: firebase.firestore.Firestore): firebase.firestore.CollectionReference {
-  return db.collection('Users');
-}
-
-// テスト用のクラス、誤った値を入れられるように型を少し実際とは変えています
-class User {
-  UserName: string | number;
-  Agreement: boolean | number;
-  AgreementDate: firebase.firestore.Timestamp | firebase.firestore.FieldValue | string;
-  AuthStyle: string | number;
-  RegistrationDate: firebase.firestore.Timestamp | firebase.firestore.FieldValue | string;
-
-  constructor(
-    username: string,
-    agreement: boolean,
-    agreementDate: firebase.firestore.Timestamp,
-    authStyle: string,
-    registrationDate: firebase.firestore.FieldValue
-  ) {
-    this.UserName = username;
-    this.Agreement = agreement;
-    this.AgreementDate = agreementDate;
-    this.AuthStyle = authStyle;
-    this.RegistrationDate = registrationDate;
-  }
-}
-
-function correctUser(): User {
-  return new User(
-    'atsutomo',
-    true,
-    firebase.firestore.Timestamp.now(),
-    'Email&Password',
-    firebase.firestore.FieldValue.serverTimestamp()
-  );
-}
