@@ -31,6 +31,18 @@ service cloud.firestore {
       && 'UserName' in user && user.UserName is string // UserNameがあって、string
     }
 
+    // User/Groupのスキーマ検証
+    function isValidUserGroup(group) {
+      return group.size() == 7 // 5つのフィールドを持っている
+      && 'GroupName' in group && group.GroupName is string // GroupNameがあって、string
+      && 'GroupNameEng' in group && group.GroupNameEng is string // GroupNameEngがあって、string
+      && 'GroupPassword' in group && group.GroupPassword is string // GroupPasswordがあって、string
+      && 'JoiningDate' in group && group.JoiningDate is timestamp // JoiningDateがあって、timestamp
+      && 'MemberType' in group && group.MemberType is string // MemberTypeがあって、string
+      && 'Role' in group && group.Role is string // Roleがあって、string
+      && 'Term' in group && group.Term is string // Termがあって、string
+    }
+
     // Usersに関するRule
     match /Users/{userID} {
       // Usersの情報を読み取れるのは自分だけ
@@ -54,6 +66,27 @@ service cloud.firestore {
 
       // User情報を削除できるのは自分だけ
       allow delete: if isUserAuthenticated(userID);
+
+      // Users以下のGroupsに関するRule
+      match /Groups/{groupID} {
+        // Groupsの情報を読み取れるのは自分だけ
+        allow read: if isUserAuthenticated(userID);
+
+        // Groups情報を作れるのは自分だけ
+        allow create: if isUserAuthenticated(userID) // ログインとUserIDの判定
+        && isValidUserGroup(request.resource.data) // スキーマ検証
+        // 以下データのバリデーション
+        && request.resource.data.JoiningDate == request.time // 作成時刻はサーバタイムスタンプの値と一致
+
+        // Groups情報を更新できるのは自分だけ、またJoiningDateは更新できない
+        allow update: if isUserAuthenticated(userID) // ログインとUserIDの判定
+        && isValidUserGroup(request.resource.data) // スキーマ検証
+        // 以下データのバリデーション
+        && request.resource.data.JoiningDate == resource.data.JoiningDate // JoiningDateは更新されていない
+
+        // Groups情報を削除できるのは自分だけ
+        allow delete: if isUserAuthenticated(userID);
+      }
     }
   }
 }
