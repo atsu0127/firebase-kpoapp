@@ -56,7 +56,7 @@ service cloud.firestore {
       && request.resource.data.AgreementDate < request.time // AgreementDateがrequest.time以前(チェックする→送信の流れなので必ず少し前になる)
       && request.resource.data.RegistrationDate == request.time // 作成時刻はサーバタイムスタンプの値と一致
 
-      // User情報を更新できるのは自分だけ、またRegistrationDateは更新できない
+      // Users情報を更新できるのは自分だけ、またRegistrationDateは更新できない
       allow update: if isUserAuthenticated(userID) // ログインとUserIDの判定
       && isValidUser(request.resource.data) // スキーマ検証
       // 以下データのバリデーション
@@ -64,7 +64,7 @@ service cloud.firestore {
       && request.resource.data.AgreementDate < request.time // AgreementDateがrequest.time以前(チェックする→送信の流れなので必ず少し前になる)
       && request.resource.data.RegistrationDate == resource.data.RegistrationDate; // RegistrationDateは更新されていない
 
-      // User情報を削除できるのは自分だけ
+      // Users情報を削除できるのは自分だけ
       allow delete: if isUserAuthenticated(userID);
 
       // Users以下のGroupsに関するRule
@@ -87,6 +87,32 @@ service cloud.firestore {
         // Groups情報を削除できるのは自分だけ
         allow delete: if isUserAuthenticated(userID);
       }
+    }
+
+    // Groupsに関するRule
+    match /Groups/{groupID} {
+      // UserがgroupIDに所属しているか判定
+      function isBelongingGroup(groupID) {
+        return exists(/databases/$(database)/documents/Users/$(request.auth.uid)/Groups/$(groupID))
+      }
+
+      // Groupのスキーマ検証
+      function isValidGroup(group) {
+        return group.size() == 3 // 要素は三つ
+        && 'GroupName' in group && group.GroupName is string // GroupNameがあって、string
+        && 'GroupNameEng' in group && group.GroupNameEng is string // GroupNameEngがあって、string
+        && 'GroupPassword' in group && group.GroupPassword is string // GroupPasswordがあって、string
+      }
+
+      // Groupsの情報はログインしていれば誰でも読み込める
+      allow read: if isAuthenticated();
+
+      // Groups情報はグループに所属していれば編集できる
+      allow update: if isAuthenticated() // ログインしてるかチェック
+      && isBelongingGroup(groupID) // 所属しているかチェック
+      && isValidGroup(request.resource.data) // スキーマ検証
+
+      // Groups情報は現段階では作成、削除ができない
     }
   }
 }

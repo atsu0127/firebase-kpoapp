@@ -8,6 +8,10 @@ function usergroupsRef(db: firebase.firestore.Firestore, userName: string): fire
   return db.collection(`Users/${userName}/Groups`);
 }
 
+function groupsRef(db: firebase.firestore.Firestore): firebase.firestore.CollectionReference {
+  return db.collection(`Groups`);
+}
+
 // テスト用のクラス、誤った値を入れられるように型を少し実際とは変えています
 class User {
   UserName: string | number;
@@ -81,6 +85,31 @@ function correctUserGroup(): UserGroup {
   );
 }
 
+class Group {
+  GroupName: string | number;
+  GroupNameEng: string | number;
+  GroupPassword: string | number;
+
+  constructor(
+    groupName: string,
+    groupNameEng: string,
+    groupPassword: string
+  ) {
+    this.GroupName = groupName;
+    this.GroupNameEng = groupNameEng;
+    this.GroupPassword = groupPassword;
+  }
+}
+
+function correctGroup() {
+  return new Group(
+    'kpo',
+    'kpo',
+    '12345678'
+  );
+}
+
+
 class AuthUser {
   uid: string;
 
@@ -93,14 +122,17 @@ function authedApp(auth: AuthUser, projectId: string): firebase.firestore.Firest
   return firebase.initializeTestApp({ projectId: projectId, auth: auth }).firestore();
 }
 
-// function adminApp(): firebase.firestore.Firestore {
-//   return firebase.initializeAdminApp({ projectId: testName }).firestore();
-// }
+function adminApp(projectId: string): firebase.firestore.Firestore {
+  return firebase.initializeAdminApp({ projectId: projectId }).firestore();
+}
 
 export {
   usersRef,
   usergroupsRef,
+  groupsRef,
   correctUser,
   correctUserGroup,
-  authedApp
+  correctGroup,
+  authedApp,
+  adminApp
 }
