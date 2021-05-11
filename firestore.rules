@@ -93,7 +93,7 @@ service cloud.firestore {
     match /Groups/{groupID} {
       // UserがgroupIDに所属しているか判定
       function isBelongingGroup(groupID) {
-        return printRequest() && exists(/databases/$(database)/documents/Users/$(request.auth.uid)/Groups/$(groupID))
+        return exists(/databases/$(database)/documents/Users/$(request.auth.uid)/Groups/$(groupID))
       }
 
       // Groupのスキーマ検証
