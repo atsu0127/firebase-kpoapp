@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import { usersRef, usergroupsRef, correctUser, correctUserGroup, authedApp } from './lib/utils';
 
 const rulesFilePath = 'firestore.rules';
-const testName = 'firesbase-kpoapp-1';
+const testName = 'firesbase-kpoapp-usergroups';
 
 describe(testName, () => {
   // はじめに１度ルールを読み込ませる
@@ -229,7 +229,7 @@ describe(testName, () => {
           await firebase.assertFails(authed.set({ ...restGroup }, { merge: true }));
         });
 
-        test('GroupNameがstringじゃないとダメ', async () => {
+        test('GroupNameEngがstringじゃないとダメ', async () => {
           const authedUser = authedApp({ uid: 'atsutomo' }, testName);
           const authed = usergroupsRef(authedUser, 'atsutomo').doc('kpo');
           const group = correctUserGroup();

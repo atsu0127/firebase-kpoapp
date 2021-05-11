@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import { usersRef, correctUser, authedApp } from './lib/utils';
 
 const rulesFilePath = 'firestore.rules';
-const testName = 'firesbase-kpoapp-2';
+const testName = 'firesbase-kpoapp-users';
 
 describe(testName, () => {
   // はじめに１度ルールを読み込ませる
