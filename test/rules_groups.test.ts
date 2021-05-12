@@ -11,7 +11,7 @@ import {
   adminApp,
   authedUserName,
   invalidUserName,
-  targetGroupName
+  targetGroupName,
 } from './lib/utils';
 
 const rulesFilePath = 'firestore.rules';

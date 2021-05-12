@@ -1,6 +1,14 @@
 import * as firebase from '@firebase/testing';
 import * as fs from 'fs';
-import { usersRef, usergroupsRef, correctUser, correctUserGroup, authedApp, authedUserName, invalidUserName, targetGroupName} from './lib/utils';
+import {
+  usersRef,
+  usergroupsRef,
+  correctUser,
+  correctUserGroup,
+  authedApp,
+  authedUserName,
+  invalidUserName,
+} from './lib/utils';
 
 const rulesFilePath = 'firestore.rules';
 const testName = 'firesbase-kpoapp-usergroups';

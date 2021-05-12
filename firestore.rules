@@ -106,29 +106,29 @@ service cloud.firestore {
 
       // Scheduleのスキーマ検証
       function isValidSchedule(schedule) {
-        return schedule.size() == 22 // 要素は22個
+        return schedule.size() <= 22 && schedule.size() >= 15 // 要素は15~22個
         && 'EventName' in schedule && schedule.EventName is string // EventNameがあって、string
         && 'EventType' in schedule && schedule.EventType is string // EventTypeがあって、string
-        && 'EventTypeDetail' in schedule && schedule.EventTypeDetail is string // EventTypeDetailがあって、string
+        && (!('EventTypeDetail' in schedule) || ('EventTypeDetail' in schedule && schedule.EventTypeDetail is string)) // EventTypeDetailがあったら、string
         && 'FirstUpdatedByID' in schedule && schedule.FirstUpdatedByID is string // FirstUpdatedByIDがあって、string
         && 'FirstUpdatedByName' in schedule && schedule.FirstUpdatedByName is string // FirstUpdatedByNameがあって、string
         && 'FirstUpdatedOn' in schedule && schedule.FirstUpdatedOn is timestamp // FirstUpdatedOnがあって、timestamp
         && 'LastUpdatedByID' in schedule && schedule.LastUpdatedByID is string // LastUpdatedByIDがあって、string
         && 'LastUpdatedByName' in schedule && schedule.LastUpdatedByName is string // LastUpdatedByNameがあって、string
         && 'LastUpdatedOn' in schedule && schedule.LastUpdatedOn is timestamp // LastUpdatedOnがあって、timestamp
-        && 'Memo' in schedule && schedule.Memo is string // Memoがあって、string
-        && 'Notice' in schedule && schedule.Notice is string // Noticeがあって、string
+        && (!('Memo' in schedule) || ('Memo' in schedule && schedule.Memo is string)) // Memoがあったら、string
+        && (!('Notice' in schedule) || ('Notice' in schedule && schedule.Notice is string)) // Noticeがあったら、string
         && 'OwnerID' in schedule && schedule.OwnerID is string // OwnerIDがあって、string
         && 'OwnerName' in schedule && schedule.OwnerName is string // OwnerNameがあって、string
-        && 'Place' in schedule && schedule.Place is string // Placeがあって、string
-        && 'PlaceDetail' in schedule && schedule.PlaceDetail is string // PlaceDetailがあって、string
-        && 'PlaceName' in schedule && schedule.PlaceName is string // PlaceNameがあって、string
+        && (!('Place' in schedule) || ('Place' in schedule && schedule.Place is string)) // Placeがあったら、string
+        && (!('PlaceDetail' in schedule) || ('PlaceDetail' in schedule && schedule.PlaceDetail is string)) // PlaceDetailがあったら、string
+        && (!('PlaceName' in schedule) || ('PlaceName' in schedule && schedule.PlaceName is string)) // PlaceNameがあったら、string
         && 'TagAttendance' in schedule && schedule.TagAttendance is bool // TagAttendanceがあって、bool
         && 'TagCancel' in schedule && schedule.TagCancel is bool // TagCancelがあって、bool
         && 'TagShare' in schedule && schedule.TagShare is bool // TagShareがあって、bool
         && 'TimestampEnd' in schedule && schedule.TimestampEnd is timestamp // TimestampEndがあって、timestamp
         && 'TimestampStart' in schedule && schedule.TimestampStart is timestamp // TimestampStartがあって、timestamp
-        && 'Timetable' in schedule && schedule.Timetable is string; // Timetableがあって、string
+        && (!('Timetable' in schedule) || ('Timetable' in schedule && schedule.Timetable is string)); // Timetableがあったら、string
       }
 
       // Groupsの情報はログインしていれば誰でも読み込める
@@ -159,7 +159,7 @@ service cloud.firestore {
         allow update: if isAuthenticated() // ログインしてて
         && isBelongingGroup(groupID) // 所属している
         && isValidSchedule(request.resource.data)
-        && request.resource.data.FirstUpdatedOn == resource.data.JoiningDate // 作成時刻は更新されない
+        && request.resource.data.FirstUpdatedOn == resource.data.FirstUpdatedOn // 作成時刻は更新されない
         && request.resource.data.LastUpdatedOn == request.time; // 更新時刻はサーバタイムスタンプの値と一致
 
         // 削除もGroupに所属しているユーザならできる
