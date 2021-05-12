@@ -7,9 +7,9 @@
     "test": "firebase emulators:exec 'jest --silent'",
     "watch": "npm test -- --watch",
     "check-types": "tsc --noEmit",
-    "format": "prettier --write 'test/*.ts'",
-    "eslint": "eslint 'test/*.ts'",
-    "eslint:fix": "eslint test/rules*.test.ts --fix",
+    "format": "prettier --write 'test/**/*.ts'",
+    "eslint": "eslint 'test/**/*.ts'",
+    "eslint:fix": "eslint test/**/*.ts --fix",
     "lint": "npm-run-all eslint check-types",
     "lint:fix": "npm-run-all eslint:fix check-types format"
   },
