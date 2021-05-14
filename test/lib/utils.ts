@@ -24,7 +24,7 @@ function schedulesRef(
   db: firebase.firestore.Firestore,
   groupID: string
 ): firebase.firestore.CollectionReference {
-  return db.collection(`Groups/${groupID}/Schedules`);
+  return db.collection(`Groups/${groupID}/Schedule`);
 }
 
 // テスト用のクラス、誤った値を入れられるように型を少し実際とは変えています

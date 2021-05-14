@@ -1,14 +1,14 @@
 rules_version = '2';
 service cloud.firestore {
   // デバッグ用関数、デプロイ時に消す!!!
-  function printRequest() {
-    return debug(request) || true;
-  }
+  // function printRequest() {
+  //   return debug(request) || true;
+  // }
 
   // デバッグ用関数、デプロイ時に消す!!!
-  function printResource() {
-    return debug(resource) || true;
-  }
+  // function printResource() {
+  //   return debug(resource) || true;
+  // }
 
   match /databases/{database}/documents {
     // Firebase Authで認証されているか判断
@@ -142,8 +142,8 @@ service cloud.firestore {
       // Groups情報は現段階では作成、削除ができない
       allow create, delete: if false;
 
-      // // Schedulesに関するルール
-      match /Schedules/{scheduleID} {
+      // Scheduleに関するルール
+      match /Schedule/{scheduleID} {
         // Groupに所属しているユーザなら参照できる
         allow read: if isAuthenticated() // ログインしてて
         && isBelongingGroup(groupID); // 所属している
