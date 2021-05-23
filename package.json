@@ -4,7 +4,7 @@
   "description": "kpoapp setting in firebase",
   "author": "Atsutomo Tabata",
   "scripts": {
-    "test": "firebase emulators:exec 'jest --silent'",
+    "test": "firebase emulators:exec --only firestore 'jest --silent'",
     "watch": "npm test -- --watch",
     "check-types": "tsc --noEmit",
     "format": "prettier --write 'test/**/*.ts'",

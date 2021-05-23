@@ -97,7 +97,7 @@ class Schedule {
     public OwnerName: string = 'group1',
     public TagAttendance: boolean = false,
     public TagCancel: boolean = false,
-    public TagShare: boolean = false,
+    public TagImportance: boolean = false,
     public TimestampEnd: firebase.firestore.Timestamp = firebase.firestore.Timestamp.now(),
     public TimestampStart: firebase.firestore.Timestamp = firebase.firestore.Timestamp.now(),
     public EventTypeDetail?: string,

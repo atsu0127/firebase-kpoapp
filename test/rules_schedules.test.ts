@@ -106,7 +106,7 @@ describe(testName, () => {
                 OwnerName: schedule.OwnerName,
                 TagAttendance: schedule.TagAttendance,
                 TagCancel: schedule.TagCancel,
-                TagShare: schedule.TagShare,
+                TagImportance: schedule.TagImportance,
                 TimestampEnd: schedule.TimestampEnd,
                 TimestampStart: schedule.TimestampStart,
               },
