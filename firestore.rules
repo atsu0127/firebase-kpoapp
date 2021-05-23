@@ -112,10 +112,10 @@ service cloud.firestore {
         && (!('EventTypeDetail' in schedule) || ('EventTypeDetail' in schedule && schedule.EventTypeDetail is string)) // EventTypeDetailがあったら、string
         && 'FirstUpdatedByID' in schedule && schedule.FirstUpdatedByID is string // FirstUpdatedByIDがあって、string
         && 'FirstUpdatedByName' in schedule && schedule.FirstUpdatedByName is string // FirstUpdatedByNameがあって、string
-        && 'FirstUpdatedOn' in schedule && schedule.FirstUpdatedOn is timestamp // FirstUpdatedOnがあって、timestamp
+        && (!('FirstUpdatedOn' in schedule) || ('FirstUpdatedOn' in schedule && schedule.LastUpdatedOn is timestamp)) // FirstUpdatedOnがあって、timestamp
         && 'LastUpdatedByID' in schedule && schedule.LastUpdatedByID is string // LastUpdatedByIDがあって、string
         && 'LastUpdatedByName' in schedule && schedule.LastUpdatedByName is string // LastUpdatedByNameがあって、string
-        && 'LastUpdatedOn' in schedule && schedule.LastUpdatedOn is timestamp // LastUpdatedOnがあって、timestamp
+        && (!('LastUpdatedOn' in schedule) || ('LastUpdatedOn' in schedule && schedule.LastUpdatedOn is timestamp)) // LastUpdatedOnがあって、timestamp
         && (!('Memo' in schedule) || ('Memo' in schedule && schedule.Memo is string)) // Memoがあったら、string
         && (!('Notice' in schedule) || ('Notice' in schedule && schedule.Notice is string)) // Noticeがあったら、string
         && 'OwnerID' in schedule && schedule.OwnerID is string // OwnerIDがあって、string
@@ -125,7 +125,7 @@ service cloud.firestore {
         && (!('PlaceName' in schedule) || ('PlaceName' in schedule && schedule.PlaceName is string)) // PlaceNameがあったら、string
         && 'TagAttendance' in schedule && schedule.TagAttendance is bool // TagAttendanceがあって、bool
         && 'TagCancel' in schedule && schedule.TagCancel is bool // TagCancelがあって、bool
-        && 'TagShare' in schedule && schedule.TagShare is bool // TagShareがあって、bool
+        && 'TagImportance' in schedule && schedule.TagImportance is bool // TagImportanceがあって、bool
         && 'TimestampEnd' in schedule && schedule.TimestampEnd is timestamp // TimestampEndがあって、timestamp
         && 'TimestampStart' in schedule && schedule.TimestampStart is timestamp // TimestampStartがあって、timestamp
         && (!('Timetable' in schedule) || ('Timetable' in schedule && schedule.Timetable is string)); // Timetableがあったら、string
