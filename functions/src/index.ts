@@ -6,6 +6,9 @@ admin.initializeApp();
 const tools = require('firebase-tools');
 const f = functions.region('asia-northeast1');
 const db = admin.firestore();
+db.settings({
+  ignoreUndefinedProperties: true,
+});
 
 // Authからユーザが消えたらUsersからも消す
 // 以下実施してからじゃないとダメ
@@ -28,16 +31,14 @@ export const deleteUserBasedOnAuth = f.auth.user().onDelete(async (user) => {
 });
 
 // Group以下の情報が更新されたら該当するUsers/Groups/{groupID}を更新する
-export const syncGroup = f.firestore.document('Groups/{groupId}').onUpdate((change, context) => {
+export const syncGroup = f.firestore.document('Groups/{groupID}').onUpdate((change, context) => {
   // 更新されたgroupID
   const groupID = context.params.groupID;
-  
+
   // 更新データ
   const newGroupName = change.after.data().GroupName;
   const newGroupNameEng = change.after.data().GroupNameEng;
-  const newPassword = change.after.data().Password;
-
-  console.log(`target Group ID is ${groupID}`);
+  const newPassword = change.after.data().GroupPassword;
 
   // ユーザ全員取得→サブコレクションのGroupsに該当のgroupIDがあったら更新
   // ユーザのFieldにbelongingGroupsでgroupID持たせておいた方が楽そう
