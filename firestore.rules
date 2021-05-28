@@ -23,12 +23,11 @@ service cloud.firestore {
 
     // Userのスキーマ検証
     function isValidUser(user) {
-      return user.size() == 5 // 5つのフィールドを持っている
+      return user.size() == 4 // 4つのフィールドを持っている
       && 'Agreement' in user && user.Agreement is bool // Agreementがあって、boolean
       && 'AgreementDate' in user && user.AgreementDate is timestamp // AgreementDateがあって、timestamp
       && 'AuthStyle' in user && user.AuthStyle is string // AuthStyleがあって、string
       && 'RegistrationDate' in user && user.RegistrationDate is timestamp // RegistrationDateがあって、timestamp
-      && 'UserName' in user && user.UserName is string // UserNameがあって、string
     }
 
     // User/Groupのスキーマ検証

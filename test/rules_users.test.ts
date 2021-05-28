@@ -76,7 +76,7 @@ describe(testName, () => {
         test('パラメータ数が5個以外だとダメ', async () => {
           const db = authedApp({ uid: authedUserName }, testName);
           const profile = usersRef(db).doc(authedUserName);
-          // 6個の場合
+          // 5個の場合
           await firebase.assertFails(
             profile.set({
               Agreement: true,
@@ -84,16 +84,14 @@ describe(testName, () => {
               AgreementDate: firebase.firestore.Timestamp.now(),
               AuthStyle: 'Email&Password',
               RegistrationDate: firebase.firestore.FieldValue.serverTimestamp(),
-              UserName: authedUserName,
             })
           );
-          // 4個の場合
+          // 3個の場合
           await firebase.assertFails(
             profile.set({
               AgreementDate: firebase.firestore.Timestamp.now(),
               AuthStyle: 'Email&Password',
               RegistrationDate: firebase.firestore.FieldValue.serverTimestamp(),
-              UserName: authedUserName,
             })
           );
         });
@@ -127,14 +125,6 @@ describe(testName, () => {
           const profile = usersRef(db).doc(authedUserName);
           const user = correctUser();
           user.RegistrationDate = Date();
-          await firebase.assertFails(profile.set({ ...user }));
-        });
-
-        test('UserNameがstringじゃないとダメ', async () => {
-          const db = authedApp({ uid: authedUserName }, testName);
-          const profile = usersRef(db).doc(authedUserName);
-          const user = correctUser();
-          user.UserName = 1;
           await firebase.assertFails(profile.set({ ...user }));
         });
       });
@@ -174,7 +164,7 @@ describe(testName, () => {
           const user = correctUser();
           await firebase.assertSucceeds(profile.set({ ...user }));
           const { RegistrationDate, ...restUser } = user;
-          restUser.UserName = 'mototsua';
+          restUser.AuthStyle = 'another style';
           await firebase.assertSucceeds(profile.set({ ...restUser }, { merge: true }));
         });
       });
@@ -188,7 +178,7 @@ describe(testName, () => {
           const user = correctUser();
           await firebase.assertSucceeds(authed.set({ ...user }));
           const { RegistrationDate, ...restUser } = user;
-          restUser.UserName = 'mototsua';
+          restUser.AuthStyle = 'another style';
           await firebase.assertFails(anonymus.set({ ...restUser }, { merge: true }));
         });
 
@@ -200,7 +190,7 @@ describe(testName, () => {
           const user = correctUser();
           await firebase.assertSucceeds(authed.set({ ...user }));
           const { RegistrationDate, ...restUser } = user;
-          restUser.UserName = 'mototsua';
+          restUser.AuthStyle = 'another style';
           await firebase.assertFails(another.set({ ...restUser }, { merge: true }));
         });
       });
@@ -214,7 +204,7 @@ describe(testName, () => {
 
           // 少ない時は{merge: true}がないとだめ
           const { RegistrationDate, ...restUser } = user;
-          restUser.UserName = 'mototsua';
+          restUser.AuthStyle = 'another style';
           await firebase.assertFails(authed.set({ ...restUser }));
 
           // 多い場合は{merge: true}があってもだめ
@@ -260,16 +250,6 @@ describe(testName, () => {
           await firebase.assertSucceeds(authed.set({ ...user }));
           user.RegistrationDate = Date();
           await firebase.assertFails(authed.set({ ...user }, { merge: true }));
-        });
-
-        test('UserNameがstringじゃないとだめ', async () => {
-          const authedUser = authedApp({ uid: authedUserName }, testName);
-          const authed = usersRef(authedUser).doc(authedUserName);
-          const user = correctUser();
-          await firebase.assertSucceeds(authed.set({ ...user }));
-          const { RegistrationDate, ...restUser } = user;
-          restUser.UserName = 1;
-          await firebase.assertFails(authed.set({ ...restUser }, { merge: true }));
         });
       });
 
