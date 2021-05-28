@@ -30,7 +30,6 @@ function schedulesRef(
 // テスト用のクラス、誤った値を入れられるように型を少し実際とは変えています
 class User {
   constructor(
-    public UserName: string | number = authedUserName,
     public Agreement: boolean | number = true,
     public AgreementDate:
       | firebase.firestore.Timestamp
