@@ -2,9 +2,9 @@ import * as firebase from '@firebase/testing';
 import * as fs from 'fs';
 import {
   usersRef,
-  usergroupsRef,
+  mygroupsRef,
   correctUser,
-  correctUserGroup,
+  correctMyGroup,
   groupsRef,
   correctGroup,
   correctScheduleWithFullParams,
@@ -36,8 +36,8 @@ describe(testName, () => {
     const profile = usersRef(db).doc(authedUserName);
     const user = correctUser();
     await profile.set({ ...user });
-    const usergroupRef = usergroupsRef(db, authedUserName).doc(targetGroupName);
-    const usergroup = correctUserGroup();
+    const usergroupRef = mygroupsRef(db, authedUserName).doc(targetGroupName);
+    const usergroup = correctMyGroup();
     await usergroupRef.set({ ...usergroup });
     const admin = adminApp(testName);
     const groupRef = groupsRef(admin).doc(targetGroupName);

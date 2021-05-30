@@ -2,9 +2,9 @@ import * as firebase from '@firebase/testing';
 import * as fs from 'fs';
 import {
   usersRef,
-  usergroupsRef,
+  mygroupsRef,
   correctUser,
-  correctUserGroup,
+  correctMyGroup,
   authedApp,
   authedUserName,
   invalidUserName,
@@ -45,19 +45,19 @@ describe(testName, () => {
     describe('read', () => {
       test('ログインしていないユーザはreadできない', async () => {
         const db = authedApp(null, testName);
-        const usergroups = usergroupsRef(db, authedUserName).doc(invalidUserName);
+        const usergroups = mygroupsRef(db, authedUserName).doc(invalidUserName);
         await firebase.assertFails(usergroups.get());
       });
 
       test('ログインしていても自分のではないものはreadできない', async () => {
         const db = authedApp({ uid: invalidUserName }, testName);
-        const usergroups = usergroupsRef(db, authedUserName).doc(invalidUserName);
+        const usergroups = mygroupsRef(db, authedUserName).doc(invalidUserName);
         await firebase.assertFails(usergroups.get());
       });
 
       test('ログインしていて自分のものはReadできる', async () => {
         const db = authedApp({ uid: authedUserName }, testName);
-        const usergroups = usergroupsRef(db, authedUserName).doc(invalidUserName);
+        const usergroups = mygroupsRef(db, authedUserName).doc(invalidUserName);
         await firebase.assertSucceeds(usergroups.get());
       });
     });
@@ -66,8 +66,8 @@ describe(testName, () => {
       describe('成功例', () => {
         test('ログインいるユーザは自分と同IDなら所属グループが作成できる', async () => {
           const db = authedApp({ uid: authedUserName }, testName);
-          const usergroups = usergroupsRef(db, authedUserName).doc(invalidUserName);
-          const group = correctUserGroup();
+          const usergroups = mygroupsRef(db, authedUserName).doc(invalidUserName);
+          const group = correctMyGroup();
           await firebase.assertSucceeds(usergroups.set({ ...group }));
         });
       });
@@ -75,15 +75,15 @@ describe(testName, () => {
       describe('ログイン関係で失敗', () => {
         test('ログインしていないと所属グループが作成できない', async () => {
           const db = authedApp(null, testName);
-          const usergroups = usergroupsRef(db, authedUserName).doc(invalidUserName);
-          const group = correctUserGroup();
+          const usergroups = mygroupsRef(db, authedUserName).doc(invalidUserName);
+          const group = correctMyGroup();
           await firebase.assertFails(usergroups.set({ ...group }));
         });
 
         test('ログインしていてもユーザIDが違うと作成できない', async () => {
           const db = authedApp({ uid: invalidUserName }, testName);
-          const usergroups = usergroupsRef(db, authedUserName).doc(invalidUserName);
-          const group = correctUserGroup();
+          const usergroups = mygroupsRef(db, authedUserName).doc(invalidUserName);
+          const group = correctMyGroup();
           await firebase.assertFails(usergroups.set({ ...group }));
         });
       });
@@ -91,7 +91,7 @@ describe(testName, () => {
       describe('スキーマ検証で失敗', () => {
         test('パラメータ数が7個以外だとダメ', async () => {
           const db = authedApp({ uid: authedUserName }, testName);
-          const usergroups = usergroupsRef(db, authedUserName).doc(invalidUserName);
+          const usergroups = mygroupsRef(db, authedUserName).doc(invalidUserName);
           // 6個の場合
           await firebase.assertFails(
             usergroups.set({
@@ -120,40 +120,40 @@ describe(testName, () => {
 
         test('型の齟齬で失敗', async () => {
           const db = authedApp({ uid: authedUserName }, testName);
-          const usergroups = usergroupsRef(db, authedUserName).doc(invalidUserName);
-          let group = correctUserGroup();
+          const usergroups = mygroupsRef(db, authedUserName).doc(invalidUserName);
+          let group = correctMyGroup();
 
           // GroupNameはstring
           group.GroupName = 111;
           await firebase.assertFails(usergroups.set({ ...group }));
 
           // groupNameEngはstring
-          group = correctUserGroup();
+          group = correctMyGroup();
           group.GroupNameEng = 111;
           await firebase.assertFails(usergroups.set({ ...group }));
 
           // groupPasswordはstring
-          group = correctUserGroup();
+          group = correctMyGroup();
           group.GroupPassword = 111;
           await firebase.assertFails(usergroups.set({ ...group }));
 
           // joiningDateはtimestamp
-          group = correctUserGroup();
+          group = correctMyGroup();
           group.JoiningDate = Date();
           await firebase.assertFails(usergroups.set({ ...group }));
 
           // memberTypeはstring
-          group = correctUserGroup();
+          group = correctMyGroup();
           group.MemberType = 111;
           await firebase.assertFails(usergroups.set({ ...group }));
 
           // Roleはstring
-          group = correctUserGroup();
+          group = correctMyGroup();
           group.Role = 111;
           await firebase.assertFails(usergroups.set({ ...group }));
 
           // Termはstring
-          group = correctUserGroup();
+          group = correctMyGroup();
           group.Term = 111;
           await firebase.assertFails(usergroups.set({ ...group }));
         });
@@ -162,8 +162,8 @@ describe(testName, () => {
       describe('データ検証で失敗', () => {
         test('joiningDateがサーバタイムスタンプと違うとダメ', async () => {
           const db = authedApp({ uid: authedUserName }, testName);
-          const usergroups = usergroupsRef(db, authedUserName).doc(invalidUserName);
-          const group = correctUserGroup();
+          const usergroups = mygroupsRef(db, authedUserName).doc(invalidUserName);
+          const group = correctMyGroup();
           group.JoiningDate = firebase.firestore.Timestamp.now();
           await firebase.assertFails(usergroups.set({ ...group }));
         });
@@ -174,8 +174,8 @@ describe(testName, () => {
       describe('成功例', () => {
         test('ログインいるユーザは自分と同IDなら所属グループ情報が更新できる', async () => {
           const user1 = authedApp({ uid: authedUserName }, testName);
-          const usergroups = usergroupsRef(user1, authedUserName).doc(invalidUserName);
-          const group = correctUserGroup();
+          const usergroups = mygroupsRef(user1, authedUserName).doc(invalidUserName);
+          const group = correctMyGroup();
           await firebase.assertSucceeds(usergroups.set({ ...group }));
           const { JoiningDate, ...restGroup } = group;
           restGroup.GroupPassword = 'changed!!';
@@ -186,10 +186,10 @@ describe(testName, () => {
       describe('ログイン関係で失敗', () => {
         test('ログインいないユーザは所属グループ情報を更新できない', async () => {
           const authedUser = authedApp({ uid: authedUserName }, testName);
-          const authed = usergroupsRef(authedUser, authedUserName).doc(invalidUserName);
+          const authed = mygroupsRef(authedUser, authedUserName).doc(invalidUserName);
           const anonymusUser = authedApp(null, testName);
-          const anonymus = usergroupsRef(anonymusUser, authedUserName).doc(invalidUserName);
-          const group = correctUserGroup();
+          const anonymus = mygroupsRef(anonymusUser, authedUserName).doc(invalidUserName);
+          const group = correctMyGroup();
           await firebase.assertSucceeds(authed.set({ ...group }));
           const { JoiningDate, ...restGroup } = group;
           restGroup.GroupPassword = 'changed!!';
@@ -198,10 +198,10 @@ describe(testName, () => {
 
         test('ログインしててもユーザIDが違うと所属グループ情報を更新できない', async () => {
           const authedUser = authedApp({ uid: authedUserName }, testName);
-          const authed = usergroupsRef(authedUser, authedUserName).doc(invalidUserName);
+          const authed = mygroupsRef(authedUser, authedUserName).doc(invalidUserName);
           const anotherUser = authedApp({ uid: invalidUserName }, testName);
-          const another = usergroupsRef(anotherUser, authedUserName).doc(invalidUserName);
-          const group = correctUserGroup();
+          const another = mygroupsRef(anotherUser, authedUserName).doc(invalidUserName);
+          const group = correctMyGroup();
           await firebase.assertSucceeds(authed.set({ ...group }));
           const { JoiningDate, ...restGroup } = group;
           restGroup.GroupPassword = 'changed!!';
@@ -212,8 +212,8 @@ describe(testName, () => {
       describe('スキーマ検証で失敗', () => {
         test('スキーマ数が6個じゃないとだめ', async () => {
           const authedUser = authedApp({ uid: authedUserName }, testName);
-          const authed = usergroupsRef(authedUser, authedUserName).doc(invalidUserName);
-          const group = correctUserGroup();
+          const authed = mygroupsRef(authedUser, authedUserName).doc(invalidUserName);
+          const group = correctMyGroup();
           await firebase.assertSucceeds(authed.set({ ...group }));
 
           // 少ない時は{merge: true}がないとだめ
@@ -229,8 +229,8 @@ describe(testName, () => {
 
         test('GroupNameがstringじゃないとダメ', async () => {
           const authedUser = authedApp({ uid: authedUserName }, testName);
-          const authed = usergroupsRef(authedUser, authedUserName).doc(invalidUserName);
-          const group = correctUserGroup();
+          const authed = mygroupsRef(authedUser, authedUserName).doc(invalidUserName);
+          const group = correctMyGroup();
           await firebase.assertSucceeds(authed.set({ ...group }));
           const { JoiningDate, ...restGroup } = group;
           restGroup.GroupName = 111;
@@ -239,8 +239,8 @@ describe(testName, () => {
 
         test('GroupNameEngがstringじゃないとダメ', async () => {
           const authedUser = authedApp({ uid: authedUserName }, testName);
-          const authed = usergroupsRef(authedUser, authedUserName).doc(invalidUserName);
-          const group = correctUserGroup();
+          const authed = mygroupsRef(authedUser, authedUserName).doc(invalidUserName);
+          const group = correctMyGroup();
           await firebase.assertSucceeds(authed.set({ ...group }));
           const { JoiningDate, ...restGroup } = group;
           restGroup.GroupNameEng = 111;
@@ -249,8 +249,8 @@ describe(testName, () => {
 
         test('GroupPasswordがstringじゃないとダメ', async () => {
           const authedUser = authedApp({ uid: authedUserName }, testName);
-          const authed = usergroupsRef(authedUser, authedUserName).doc(invalidUserName);
-          const group = correctUserGroup();
+          const authed = mygroupsRef(authedUser, authedUserName).doc(invalidUserName);
+          const group = correctMyGroup();
           await firebase.assertSucceeds(authed.set({ ...group }));
           const { JoiningDate, ...restGroup } = group;
           restGroup.GroupPassword = 111;
@@ -259,8 +259,8 @@ describe(testName, () => {
 
         test('JoiningDateがtimestampじゃないとダメ', async () => {
           const authedUser = authedApp({ uid: authedUserName }, testName);
-          const authed = usergroupsRef(authedUser, authedUserName).doc(invalidUserName);
-          const group = correctUserGroup();
+          const authed = mygroupsRef(authedUser, authedUserName).doc(invalidUserName);
+          const group = correctMyGroup();
           await firebase.assertSucceeds(authed.set({ ...group }));
           group.JoiningDate = Date();
           await firebase.assertFails(authed.set({ ...group }, { merge: true }));
@@ -268,8 +268,8 @@ describe(testName, () => {
 
         test('MemberTypeがstringじゃないとダメ', async () => {
           const authedUser = authedApp({ uid: authedUserName }, testName);
-          const authed = usergroupsRef(authedUser, authedUserName).doc(invalidUserName);
-          const group = correctUserGroup();
+          const authed = mygroupsRef(authedUser, authedUserName).doc(invalidUserName);
+          const group = correctMyGroup();
           await firebase.assertSucceeds(authed.set({ ...group }));
           const { JoiningDate, ...restGroup } = group;
           restGroup.MemberType = 111;
@@ -278,8 +278,8 @@ describe(testName, () => {
 
         test('roleがstringじゃないとダメ', async () => {
           const authedUser = authedApp({ uid: authedUserName }, testName);
-          const authed = usergroupsRef(authedUser, authedUserName).doc(invalidUserName);
-          const group = correctUserGroup();
+          const authed = mygroupsRef(authedUser, authedUserName).doc(invalidUserName);
+          const group = correctMyGroup();
           await firebase.assertSucceeds(authed.set({ ...group }));
           const { JoiningDate, ...restGroup } = group;
           restGroup.Role = 111;
@@ -288,8 +288,8 @@ describe(testName, () => {
 
         test('termがstringじゃないとダメ', async () => {
           const authedUser = authedApp({ uid: authedUserName }, testName);
-          const authed = usergroupsRef(authedUser, authedUserName).doc(invalidUserName);
-          const group = correctUserGroup();
+          const authed = mygroupsRef(authedUser, authedUserName).doc(invalidUserName);
+          const group = correctMyGroup();
           await firebase.assertSucceeds(authed.set({ ...group }));
           const { JoiningDate, ...restGroup } = group;
           restGroup.Term = 111;
@@ -300,8 +300,8 @@ describe(testName, () => {
       describe('データ検証で失敗', () => {
         test('JoiningDateが変更されているとダメ', async () => {
           const authedUser = authedApp({ uid: authedUserName }, testName);
-          const authed = usergroupsRef(authedUser, authedUserName).doc(invalidUserName);
-          const group = correctUserGroup();
+          const authed = mygroupsRef(authedUser, authedUserName).doc(invalidUserName);
+          const group = correctMyGroup();
           await firebase.assertSucceeds(authed.set({ ...group }));
           group.JoiningDate = firebase.firestore.FieldValue.serverTimestamp();
           await firebase.assertFails(authed.set({ ...group }, { merge: true }));
@@ -313,8 +313,8 @@ describe(testName, () => {
       describe('成功例', () => {
         test('ログインいるユーザは自分と同IDなら所属団体情報を削除できる', async () => {
           const authedUser = authedApp({ uid: authedUserName }, testName);
-          const authed = usergroupsRef(authedUser, authedUserName).doc(invalidUserName);
-          const group = correctUserGroup();
+          const authed = mygroupsRef(authedUser, authedUserName).doc(invalidUserName);
+          const group = correctMyGroup();
           await firebase.assertSucceeds(authed.set({ ...group }));
           await firebase.assertSucceeds(authed.delete());
         });
@@ -323,20 +323,20 @@ describe(testName, () => {
       describe('失敗例', () => {
         test('ログインしてないと所属団体情報を削除できない', async () => {
           const authedUser = authedApp({ uid: authedUserName }, testName);
-          const authed = usergroupsRef(authedUser, authedUserName).doc(invalidUserName);
+          const authed = mygroupsRef(authedUser, authedUserName).doc(invalidUserName);
           const anonymusUser = authedApp(null, testName);
-          const anonymus = usergroupsRef(anonymusUser, authedUserName).doc(invalidUserName);
-          const group = correctUserGroup();
+          const anonymus = mygroupsRef(anonymusUser, authedUserName).doc(invalidUserName);
+          const group = correctMyGroup();
           await firebase.assertSucceeds(authed.set({ ...group }));
           await firebase.assertFails(anonymus.delete());
         });
 
         test('ログインしていてもユーザIDが違うと所属団体情報を削除できない', async () => {
           const authedUser = authedApp({ uid: authedUserName }, testName);
-          const authed = usergroupsRef(authedUser, authedUserName).doc(invalidUserName);
+          const authed = mygroupsRef(authedUser, authedUserName).doc(invalidUserName);
           const anonymusUser = authedApp({ uid: invalidUserName }, testName);
-          const anonymus = usergroupsRef(anonymusUser, authedUserName).doc(invalidUserName);
-          const group = correctUserGroup();
+          const anonymus = mygroupsRef(anonymusUser, authedUserName).doc(invalidUserName);
+          const group = correctMyGroup();
           await firebase.assertSucceeds(authed.set({ ...group }));
           await firebase.assertFails(anonymus.delete());
         });
