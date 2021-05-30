@@ -31,7 +31,7 @@ service cloud.firestore {
     }
 
     // User/Groupのスキーマ検証
-    function isValidUserGroup(group) {
+    function isValidMyGroup(group) {
       return group.size() == 7 // 5つのフィールドを持っている
       && 'GroupName' in group && group.GroupName is string // GroupNameがあって、string
       && 'GroupNameEng' in group && group.GroupNameEng is string // GroupNameEngがあって、string
@@ -67,19 +67,19 @@ service cloud.firestore {
       allow delete: if isUserAuthenticated(userID);
 
       // Users以下のGroupsに関するRule
-      match /Groups/{groupID} {
+      match /MyGroups/{groupID} {
         // Groupsの情報を読み取れるのは自分だけ
         allow read: if isUserAuthenticated(userID);
 
         // Groups情報を作れるのは自分だけ
         allow create: if isUserAuthenticated(userID) // ログインとUserIDの判定
-        && isValidUserGroup(request.resource.data) // スキーマ検証
+        && isValidMyGroup(request.resource.data) // スキーマ検証
         // 以下データのバリデーション
         && request.resource.data.JoiningDate == request.time // 作成時刻はサーバタイムスタンプの値と一致
 
         // Groups情報を更新できるのは自分だけ、またJoiningDateは更新できない
         allow update: if isUserAuthenticated(userID) // ログインとUserIDの判定
-        && isValidUserGroup(request.resource.data) // スキーマ検証
+        && isValidMyGroup(request.resource.data) // スキーマ検証
         // 以下データのバリデーション
         && request.resource.data.JoiningDate == resource.data.JoiningDate // JoiningDateは更新されていない
 
@@ -92,7 +92,7 @@ service cloud.firestore {
     match /Groups/{groupID} {
       // UserがgroupIDに所属しているか判定
       function isBelongingGroup(groupID) {
-        return exists(/databases/$(database)/documents/Users/$(request.auth.uid)/Groups/$(groupID))
+        return exists(/databases/$(database)/documents/Users/$(request.auth.uid)/MyGroups/$(groupID))
       }
 
       // Groupのスキーマ検証

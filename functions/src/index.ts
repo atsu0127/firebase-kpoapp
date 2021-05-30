@@ -47,7 +47,7 @@ export const syncGroup = f.firestore.document('Groups/{groupID}').onUpdate((chan
     .then((querySnapshot) => {
       querySnapshot.forEach((doc) => {
         const userID = doc.id;
-        const userGroupRef = userRef.doc(userID).collection('Groups').doc(groupID);
+        const userGroupRef = userRef.doc(userID).collection('MyGroups').doc(groupID);
         userGroupRef.get()
           .then((targetDoc) => {
             if (targetDoc.exists) {

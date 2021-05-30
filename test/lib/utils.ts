@@ -9,11 +9,11 @@ function usersRef(db: firebase.firestore.Firestore): firebase.firestore.Collecti
   return db.collection('Users');
 }
 
-function usergroupsRef(
+function mygroupsRef(
   db: firebase.firestore.Firestore,
   userName: string
 ): firebase.firestore.CollectionReference {
-  return db.collection(`Users/${userName}/Groups`);
+  return db.collection(`Users/${userName}/MyGroups`);
 }
 
 function groupsRef(db: firebase.firestore.Firestore): firebase.firestore.CollectionReference {
@@ -47,7 +47,7 @@ function correctUser(): User {
   return new User();
 }
 
-class UserGroup {
+class MyGroup {
   constructor(
     public GroupName: string | number = targetGroupName,
     public GroupNameEng: string | number = targetGroupName,
@@ -62,8 +62,8 @@ class UserGroup {
   ) {}
 }
 
-function correctUserGroup(): UserGroup {
-  return new UserGroup();
+function correctMyGroup(): MyGroup {
+  return new MyGroup();
 }
 
 class Group {
@@ -143,11 +143,11 @@ function adminApp(projectId: string): firebase.firestore.Firestore {
 
 export {
   usersRef,
-  usergroupsRef,
+  mygroupsRef,
   groupsRef,
   schedulesRef,
   correctUser,
-  correctUserGroup,
+  correctMyGroup,
   correctGroup,
   correctScheduleWithLeastParams,
   correctScheduleWithFullParams,
