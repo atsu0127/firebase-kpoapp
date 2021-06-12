@@ -5,7 +5,7 @@ const invalidUserName = 'tabata';
 const memberUserName = 'hoge';
 const targetGroupName = 'kpo';
 const targetMemberName = authedUserName;
-const targetScheduleName = 'schedule';
+const targetEventName = 'event';
 
 function usersRef(db: firebase.firestore.Firestore): firebase.firestore.CollectionReference {
   return db.collection('Users');
@@ -29,11 +29,11 @@ function membersRef(
   return db.collection(`Groups/${groupID}/Members`);
 }
 
-function schedulesRef(
+function eventsRef(
   db: firebase.firestore.Firestore,
   groupID: string
 ): firebase.firestore.CollectionReference {
-  return db.collection(`Groups/${groupID}/Schedule`);
+  return db.collection(`Groups/${groupID}/Events`);
 }
 
 // テスト用のクラス、誤った値を入れられるように型を少し実際とは変えています
@@ -103,7 +103,7 @@ function correctMember(): Member {
   return new Member();
 }
 
-class Schedule {
+class Event {
   constructor(
     public EventName: string | number = 'event1',
     public EventType: string = 'type1',
@@ -134,20 +134,20 @@ class Schedule {
   ) {}
 }
 
-function correctScheduleWithLeastParams(): Schedule {
-  return new Schedule();
+function correctEventWithLeastParams(): Event {
+  return new Event();
 }
 
-function correctScheduleWithFullParams(): Schedule {
-  const schedule = new Schedule();
-  schedule.EventTypeDetail = 'eventTypeDetail';
-  schedule.Memo = 'memo';
-  schedule.Notice = 'notice';
-  schedule.Place = 'place';
-  schedule.PlaceDetail = 'placeDetail';
-  schedule.PlaceName = 'PlaceName';
-  schedule.Timetable = 'timeTable';
-  return schedule;
+function correctEventWithFullParams(): Event {
+  const event = new Event();
+  event.EventTypeDetail = 'eventTypeDetail';
+  event.Memo = 'memo';
+  event.Notice = 'notice';
+  event.Place = 'place';
+  event.PlaceDetail = 'placeDetail';
+  event.PlaceName = 'PlaceName';
+  event.Timetable = 'timeTable';
+  return event;
 }
 
 class AuthUser {
@@ -171,19 +171,19 @@ export {
   mygroupsRef,
   groupsRef,
   membersRef,
-  schedulesRef,
+  eventsRef,
   correctUser,
   correctMyGroup,
   correctGroup,
   correctMember,
-  correctScheduleWithLeastParams,
-  correctScheduleWithFullParams,
+  correctEventWithLeastParams,
+  correctEventWithFullParams,
   authedApp,
   adminApp,
   authedUserName,
   invalidUserName,
   targetGroupName,
   targetMemberName,
-  targetScheduleName,
+  targetEventName,
   memberUserName,
 };
