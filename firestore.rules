@@ -92,7 +92,7 @@ service cloud.firestore {
     match /Groups/{groupID} {
       // UserがgroupIDに所属しているか判定
       function isBelongingGroup(groupID) {
-        return exists(/databases/$(database)/documents/Users/$(request.auth.uid)/MyGroups/$(groupID))
+        return exists(/databases/$(database)/documents/Groups/$(groupID)/Members/$(request.auth.uid))
       }
 
       // Groupのスキーマ検証
@@ -130,6 +130,16 @@ service cloud.firestore {
         && (!('Timetable' in schedule) || ('Timetable' in schedule && schedule.Timetable is string)); // Timetableがあったら、string
       }
 
+      // Membersのスキーマ検証
+      function isValidMember(member) {
+        return member.size() == 5 // 要素は5つ
+        && 'JoiningDate' in member && member.JoiningDate is timestamp // JoiningDateがあって、timestamp
+        && 'MemberName' in member && member.MemberName is string // MemberNameがあって、string
+        && 'MemberType' in member && member.MemberType is string // MemberTypeがあって、string
+        && 'Role' in member && member.Role is string // Roleがあって、string
+        && 'Term' in member && member.Term is string // Termがあって、string
+      }
+
       // Groupsの情報はログインしていれば誰でも読み込める
       allow read: if isAuthenticated();
 
@@ -140,6 +150,29 @@ service cloud.firestore {
 
       // Groups情報は現段階では作成、削除ができない
       allow create, delete: if false;
+
+      // Membersに関するルール
+      match /Members/{memberID} {
+        allow read: if isAuthenticated(); // ログインしてる
+
+        // 作成はログインしていればできる
+        // パスワード認証で不正なユーザは弾く
+        allow create: if isAuthenticated() // ログインしてて
+        && isValidMember(request.resource.data)
+        && request.resource.data.JoiningDate == request.time // 作成時刻はサーバタイムスタンプの値と一致
+
+        // 編集はGroupに所属していて自分自身ならできる
+        allow update: if isAuthenticated() // ログインしてて
+        && isBelongingGroup(groupID) // 所属していて
+        && request.auth.uid == memberID // 自分自身
+        && isValidMember(request.resource.data)
+        && request.resource.data.JoiningDate == resource.data.JoiningDate // 作成時刻は更新されない
+
+        // 削除はGroupに所属していて自分自身ならできる
+        allow delete: if isAuthenticated() // ログインしてて
+        && isBelongingGroup(groupID) // 所属している
+        && request.auth.uid == memberID // 自分自身
+      }
 
       // Scheduleに関するルール
       match /Schedule/{scheduleID} {

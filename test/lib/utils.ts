@@ -2,7 +2,9 @@ import * as firebase from '@firebase/testing';
 
 const authedUserName = 'atsutomo';
 const invalidUserName = 'tabata';
+const memberUserName = 'hoge';
 const targetGroupName = 'kpo';
+const targetMemberName = authedUserName;
 const targetScheduleName = 'schedule';
 
 function usersRef(db: firebase.firestore.Firestore): firebase.firestore.CollectionReference {
@@ -18,6 +20,13 @@ function mygroupsRef(
 
 function groupsRef(db: firebase.firestore.Firestore): firebase.firestore.CollectionReference {
   return db.collection(`Groups`);
+}
+
+function membersRef(
+  db: firebase.firestore.Firestore,
+  groupID: string
+): firebase.firestore.CollectionReference {
+  return db.collection(`Groups/${groupID}/Members`);
 }
 
 function schedulesRef(
@@ -76,6 +85,22 @@ class Group {
 
 function correctGroup(): Group {
   return new Group();
+}
+
+class Member {
+  constructor(
+    public MemberName: string | number = targetMemberName,
+    public MemberType: string | number = '正団員',
+    public Role: string | number = '',
+    public Term: string | number = '8期',
+    public JoiningDate:
+      | firebase.firestore.FieldValue
+      | string = firebase.firestore.FieldValue.serverTimestamp()
+  ) {}
+}
+
+function correctMember(): Member {
+  return new Member();
 }
 
 class Schedule {
@@ -145,10 +170,12 @@ export {
   usersRef,
   mygroupsRef,
   groupsRef,
+  membersRef,
   schedulesRef,
   correctUser,
   correctMyGroup,
   correctGroup,
+  correctMember,
   correctScheduleWithLeastParams,
   correctScheduleWithFullParams,
   authedApp,
@@ -156,5 +183,7 @@ export {
   authedUserName,
   invalidUserName,
   targetGroupName,
+  targetMemberName,
   targetScheduleName,
+  memberUserName,
 };
