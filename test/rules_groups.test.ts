@@ -12,6 +12,9 @@ import {
   authedUserName,
   invalidUserName,
   targetGroupName,
+  membersRef,
+  targetMemberName,
+  correctMember,
 } from './lib/utils';
 
 const rulesFilePath = 'firestore.rules';
@@ -73,12 +76,15 @@ describe(testName, () => {
     });
 
     describe('update', () => {
-      // 開始前にgroupの情報作っておく
+      // 開始前にgroupの情報作っておきユーザも所属させておく
       beforeEach(async () => {
         const admin = adminApp(testName);
         const adminRef = groupsRef(admin).doc(targetGroupName);
         const group = correctGroup();
         await firebase.assertSucceeds(adminRef.set({ ...group }));
+        const memberRef = membersRef(admin, targetGroupName).doc(targetMemberName);
+        const member = correctMember();
+        await firebase.assertSucceeds(memberRef.set({ ...member }));
       });
 
       describe('成功例', () => {

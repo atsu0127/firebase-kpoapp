@@ -103,31 +103,31 @@ service cloud.firestore {
         && 'GroupPassword' in group && group.GroupPassword is string // GroupPasswordがあって、string
       }
 
-      // Scheduleのスキーマ検証
-      function isValidSchedule(schedule) {
-        return schedule.size() <= 22 && schedule.size() >= 15 // 要素は15~22個
-        && 'EventName' in schedule && schedule.EventName is string // EventNameがあって、string
-        && 'EventType' in schedule && schedule.EventType is string // EventTypeがあって、string
-        && (!('EventTypeDetail' in schedule) || ('EventTypeDetail' in schedule && schedule.EventTypeDetail is string)) // EventTypeDetailがあったら、string
-        && 'FirstUpdatedByID' in schedule && schedule.FirstUpdatedByID is string // FirstUpdatedByIDがあって、string
-        && 'FirstUpdatedByName' in schedule && schedule.FirstUpdatedByName is string // FirstUpdatedByNameがあって、string
-        && (!('FirstUpdatedOn' in schedule) || ('FirstUpdatedOn' in schedule && schedule.LastUpdatedOn is timestamp)) // FirstUpdatedOnがあって、timestamp
-        && 'LastUpdatedByID' in schedule && schedule.LastUpdatedByID is string // LastUpdatedByIDがあって、string
-        && 'LastUpdatedByName' in schedule && schedule.LastUpdatedByName is string // LastUpdatedByNameがあって、string
-        && (!('LastUpdatedOn' in schedule) || ('LastUpdatedOn' in schedule && schedule.LastUpdatedOn is timestamp)) // LastUpdatedOnがあって、timestamp
-        && (!('Memo' in schedule) || ('Memo' in schedule && schedule.Memo is string)) // Memoがあったら、string
-        && (!('Notice' in schedule) || ('Notice' in schedule && schedule.Notice is string)) // Noticeがあったら、string
-        && 'OwnerID' in schedule && schedule.OwnerID is string // OwnerIDがあって、string
-        && 'OwnerName' in schedule && schedule.OwnerName is string // OwnerNameがあって、string
-        && (!('Place' in schedule) || ('Place' in schedule && schedule.Place is string)) // Placeがあったら、string
-        && (!('PlaceDetail' in schedule) || ('PlaceDetail' in schedule && schedule.PlaceDetail is string)) // PlaceDetailがあったら、string
-        && (!('PlaceName' in schedule) || ('PlaceName' in schedule && schedule.PlaceName is string)) // PlaceNameがあったら、string
-        && 'TagAttendance' in schedule && schedule.TagAttendance is bool // TagAttendanceがあって、bool
-        && 'TagCancel' in schedule && schedule.TagCancel is bool // TagCancelがあって、bool
-        && 'TagImportance' in schedule && schedule.TagImportance is bool // TagImportanceがあって、bool
-        && 'TimestampEnd' in schedule && schedule.TimestampEnd is timestamp // TimestampEndがあって、timestamp
-        && 'TimestampStart' in schedule && schedule.TimestampStart is timestamp // TimestampStartがあって、timestamp
-        && (!('Timetable' in schedule) || ('Timetable' in schedule && schedule.Timetable is string)); // Timetableがあったら、string
+      // Eventのスキーマ検証
+      function isValidEvent(event) {
+        return event.size() <= 22 && event.size() >= 15 // 要素は15~22個
+        && 'EventName' in event && event.EventName is string // EventNameがあって、string
+        && 'EventType' in event && event.EventType is string // EventTypeがあって、string
+        && (!('EventTypeDetail' in event) || ('EventTypeDetail' in event && event.EventTypeDetail is string)) // EventTypeDetailがあったら、string
+        && 'FirstUpdatedByID' in event && event.FirstUpdatedByID is string // FirstUpdatedByIDがあって、string
+        && 'FirstUpdatedByName' in event && event.FirstUpdatedByName is string // FirstUpdatedByNameがあって、string
+        && (!('FirstUpdatedOn' in event) || ('FirstUpdatedOn' in event && event.LastUpdatedOn is timestamp)) // FirstUpdatedOnがあって、timestamp
+        && 'LastUpdatedByID' in event && event.LastUpdatedByID is string // LastUpdatedByIDがあって、string
+        && 'LastUpdatedByName' in event && event.LastUpdatedByName is string // LastUpdatedByNameがあって、string
+        && (!('LastUpdatedOn' in event) || ('LastUpdatedOn' in event && event.LastUpdatedOn is timestamp)) // LastUpdatedOnがあって、timestamp
+        && (!('Memo' in event) || ('Memo' in event && event.Memo is string)) // Memoがあったら、string
+        && (!('Notice' in event) || ('Notice' in event && event.Notice is string)) // Noticeがあったら、string
+        && 'OwnerID' in event && event.OwnerID is string // OwnerIDがあって、string
+        && 'OwnerName' in event && event.OwnerName is string // OwnerNameがあって、string
+        && (!('Place' in event) || ('Place' in event && event.Place is string)) // Placeがあったら、string
+        && (!('PlaceDetail' in event) || ('PlaceDetail' in event && event.PlaceDetail is string)) // PlaceDetailがあったら、string
+        && (!('PlaceName' in event) || ('PlaceName' in event && event.PlaceName is string)) // PlaceNameがあったら、string
+        && 'TagAttendance' in event && event.TagAttendance is bool // TagAttendanceがあって、bool
+        && 'TagCancel' in event && event.TagCancel is bool // TagCancelがあって、bool
+        && 'TagImportance' in event && event.TagImportance is bool // TagImportanceがあって、bool
+        && 'TimestampEnd' in event && event.TimestampEnd is timestamp // TimestampEndがあって、timestamp
+        && 'TimestampStart' in event && event.TimestampStart is timestamp // TimestampStartがあって、timestamp
+        && (!('Timetable' in event) || ('Timetable' in event && event.Timetable is string)); // Timetableがあったら、string
       }
 
       // Membersのスキーマ検証
@@ -174,8 +174,8 @@ service cloud.firestore {
         && request.auth.uid == memberID // 自分自身
       }
 
-      // Scheduleに関するルール
-      match /Schedule/{scheduleID} {
+      // Eventsに関するルール
+      match /Events/{eventID} {
         // Groupに所属しているユーザなら参照できる
         allow read: if isAuthenticated() // ログインしてて
         && isBelongingGroup(groupID); // 所属している
@@ -183,14 +183,14 @@ service cloud.firestore {
         // 作成もGroupに所属しているユーザならできる
         allow create: if isAuthenticated() // ログインしてて
         && isBelongingGroup(groupID) // 所属している
-        && isValidSchedule(request.resource.data)
+        && isValidEvent(request.resource.data)
         && request.resource.data.FirstUpdatedOn == request.time // 作成時刻はサーバタイムスタンプの値と一致
         && request.resource.data.LastUpdatedOn == request.time; // 作成時刻はサーバタイムスタンプの値と一致
 
         // 編集もGroupに所属しているユーザならできる
         allow update: if isAuthenticated() // ログインしてて
         && isBelongingGroup(groupID) // 所属している
-        && isValidSchedule(request.resource.data)
+        && isValidEvent(request.resource.data)
         && request.resource.data.FirstUpdatedOn == resource.data.FirstUpdatedOn // 作成時刻は更新されない
         && request.resource.data.LastUpdatedOn == request.time; // 更新時刻はサーバタイムスタンプの値と一致
 
