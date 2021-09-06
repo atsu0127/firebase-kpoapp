@@ -100,6 +100,7 @@ describe(testName, () => {
           await firebase.assertSucceeds(
             eventRef.set(
               {
+                EventID: event.EventID,
                 EventName: event.EventName,
                 EventType: event.EventType,
                 FirstUpdatedByID: event.FirstUpdatedByID,
@@ -226,6 +227,17 @@ describe(testName, () => {
           const event = correctEventWithFullParams();
           const { FirstUpdatedOn, ...restEvent } = event;
           restEvent.EventName = 111;
+          await firebase.assertFails(normalRef.set({ ...restEvent }, { merge: true }));
+        });
+      });
+
+      describe('データ検証で失敗', () => {
+        test('EventIDが更新されてたらだめ', async () => {
+          const db = authedApp({ uid: authedUserName }, testName);
+          const normalRef = eventsRef(db, targetGroupName).doc(targetEventName);
+          const event = correctEventWithFullParams();
+          const { FirstUpdatedOn, ...restEvent } = event;
+          restEvent.EventID = `${restEvent.EventID}aaa`;
           await firebase.assertFails(normalRef.set({ ...restEvent }, { merge: true }));
         });
       });

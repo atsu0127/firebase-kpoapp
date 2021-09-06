@@ -39,6 +39,7 @@ function eventsRef(
 // テスト用のクラス、誤った値を入れられるように型を少し実際とは変えています
 class User {
   constructor(
+    public UserID: string | number = authedUserName,
     public Agreement: boolean | number = true,
     public AgreementDate:
       | firebase.firestore.Timestamp
@@ -58,6 +59,7 @@ function correctUser(): User {
 
 class MyGroup {
   constructor(
+    public MyGroupID: string | number = targetGroupName,
     public GroupName: string | number = targetGroupName,
     public GroupNameEng: string | number = targetGroupName,
     public GroupPassword: string | number = '12345678',
@@ -77,6 +79,7 @@ function correctMyGroup(): MyGroup {
 
 class Group {
   constructor(
+    public GroupID: string | number = targetGroupName,
     public GroupName: string | number = targetGroupName,
     public GroupNameEng: string | number = targetGroupName,
     public GroupPassword: string | number = '12345678'
@@ -89,6 +92,7 @@ function correctGroup(): Group {
 
 class Member {
   constructor(
+    public MemberID: string | number = targetMemberName,
     public MemberName: string | number = targetMemberName,
     public MemberType: string | number = '正団員',
     public Role: string | number = '',
@@ -105,6 +109,7 @@ function correctMember(): Member {
 
 class Event {
   constructor(
+    public EventID: string | number = 'event1',
     public EventName: string | number = 'event1',
     public EventType: string = 'type1',
     public FirstUpdatedByID: string = 'user1',

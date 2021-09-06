@@ -48,7 +48,7 @@ describe(testName, () => {
 
     describe('create', () => {
       describe('成功例', () => {
-        test('ログインいるユーザは自分と同IDならユーザが作成できる', async () => {
+        test('ログインしているユーザは自分と同IDならユーザが作成できる', async () => {
           const db = authedApp({ uid: authedUserName }, testName);
           const profile = usersRef(db).doc(authedUserName);
           const user = correctUser();
@@ -73,12 +73,13 @@ describe(testName, () => {
       });
 
       describe('スキーマ検証で失敗', () => {
-        test('パラメータ数が5個以外だとダメ', async () => {
+        test('パラメータ数が6個以外だとダメ', async () => {
           const db = authedApp({ uid: authedUserName }, testName);
           const profile = usersRef(db).doc(authedUserName);
-          // 5個の場合
+          // 6個の場合
           await firebase.assertFails(
             profile.set({
+              UserID: 'test',
               Agreement: true,
               Agreement2: true,
               AgreementDate: firebase.firestore.Timestamp.now(),
@@ -86,14 +87,23 @@ describe(testName, () => {
               RegistrationDate: firebase.firestore.FieldValue.serverTimestamp(),
             })
           );
-          // 3個の場合
+          // 4個の場合
           await firebase.assertFails(
             profile.set({
+              Agreement: true,
               AgreementDate: firebase.firestore.Timestamp.now(),
               AuthStyle: 'Email&Password',
               RegistrationDate: firebase.firestore.FieldValue.serverTimestamp(),
             })
           );
+        });
+
+        test('UserIDがstringじゃないとダメ', async () => {
+          const db = authedApp({ uid: authedUserName }, testName);
+          const profile = usersRef(db).doc(authedUserName);
+          const user = correctUser();
+          user.UserID = 1;
+          await firebase.assertFails(profile.set({ ...user }));
         });
 
         test('Agreementがboolじゃないとダメ', async () => {
@@ -196,7 +206,7 @@ describe(testName, () => {
       });
 
       describe('スキーマ検証で失敗', () => {
-        test('スキーマ数が5個じゃないとだめ', async () => {
+        test('スキーマ数が6個じゃないとだめ', async () => {
           const authedUser = authedApp({ uid: authedUserName }, testName);
           const authed = usersRef(authedUser).doc(authedUserName);
           const user = correctUser();
@@ -209,7 +219,7 @@ describe(testName, () => {
 
           // 多い場合は{merge: true}があってもだめ
           await firebase.assertFails(
-            authed.set({ ...restUser, para1: 10, para2: 20 }, { merge: true })
+            authed.set({ ...restUser, para1: 10, para2: 20, para3: 30 }, { merge: true })
           );
         });
 
@@ -280,6 +290,15 @@ describe(testName, () => {
           const user = correctUser();
           await firebase.assertSucceeds(profile.set({ ...user }));
           user.RegistrationDate = firebase.firestore.FieldValue.serverTimestamp();
+          await firebase.assertFails(profile.set({ ...user }, { merge: true }));
+        });
+
+        test('UserIDが変更されているとダメ', async () => {
+          const user1 = authedApp({ uid: authedUserName }, testName);
+          const profile = usersRef(user1).doc(authedUserName);
+          const user = correctUser();
+          await firebase.assertSucceeds(profile.set({ ...user }));
+          user.UserID = `${user.UserID}aaaa`;
           await firebase.assertFails(profile.set({ ...user }, { merge: true }));
         });
       });
