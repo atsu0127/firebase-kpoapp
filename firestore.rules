@@ -88,6 +88,21 @@ service cloud.firestore {
         && request.resource.data.MyGroupID == resource.data.MyGroupID // GroupIDが更新されていない
         && request.resource.data.JoiningDate == resource.data.JoiningDate // JoiningDateは更新されていない
 
+          // Groups情報を削除できるのは自分だけ
+        allow delete: if isUserAuthenticated(userID);
+      }
+
+      // Users以下のGroupsに関するRule2（2021/09/04 杉山追加）
+      match /MyAttendance/{groupID} {
+        // Groupsの情報を読み取れるのは自分だけ
+        allow read: if isUserAuthenticated(userID);
+
+        // Groups情報を作れるのは自分だけ
+        allow create: if isUserAuthenticated(userID) // ログインとUserIDの判定
+
+        // Groups情報を更新できるのは自分だけ、またJoiningDateは更新できない
+        allow update: if isUserAuthenticated(userID) // ログインとUserIDの判定
+
         // Groups情報を削除できるのは自分だけ
         allow delete: if isUserAuthenticated(userID);
       }
@@ -211,15 +226,28 @@ service cloud.firestore {
         && isBelongingGroup(groupID); // 所属している
       }
 
-      // 連絡について(2021/07/03 杉山追加)
-      // TODO: 実装
+      // 連絡について（2021/07/03 杉山追加）
       match /Mails/{mailID} {
         allow read, create, delete, update: if true;
       }
 
-      // 演奏曲について(2021/06/12 杉山追加)
-      // TODO: 実装
+      // 演奏曲について（2021/06/12 杉山追加）
       match /Programs/{programID} {
+        allow read, create, delete, update: if true;
+      }
+
+      // 演奏指示について（2021/09/05 杉山追加）
+      match /Programs/{programID}/Instructions/{instructionID} {
+        allow read, create, delete, update: if true;
+      }
+
+      // 録音について（2021/09/05 杉山追加）
+      match /Programs/{programID}/Records/{reccordID} {
+        allow read, create, delete, update: if true;
+      }
+
+      // 乗り番について（2021/09/05 杉山追加）
+      match /Programs/{programID}/Players/{playerID} {
         allow read, create, delete, update: if true;
       }
     }
