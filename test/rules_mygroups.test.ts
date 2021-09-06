@@ -89,31 +89,33 @@ describe(testName, () => {
       });
 
       describe('スキーマ検証で失敗', () => {
-        test('パラメータ数が7個以外だとダメ', async () => {
+        test('パラメータ数が8個以外だとダメ', async () => {
           const db = authedApp({ uid: authedUserName }, testName);
           const usergroups = mygroupsRef(db, authedUserName).doc(invalidUserName);
-          // 6個の場合
+          // 7個の場合
           await firebase.assertFails(
             usergroups.set({
-              groupName: 'gname',
-              groupNameEng: 'gnameeng',
-              joiningDate: firebase.firestore.FieldValue.serverTimestamp(),
-              memberType: 'mtype',
-              role: 'role',
-              term: 'term',
+              GroupName: 'gname',
+              GroupNameEng: 'gnameeng',
+              GroupPassword: 'password',
+              JoiningDate: firebase.firestore.FieldValue.serverTimestamp(),
+              MemberType: 'mtype',
+              Role: 'role',
+              Term: 'term',
             })
           );
-          // 8個の場合
+          // 9個の場合
           await firebase.assertFails(
             usergroups.set({
-              groupName: 'gname',
-              groupNameEng: 'gnameeng',
-              groupPassword: 'password',
-              joiningDate: firebase.firestore.FieldValue.serverTimestamp(),
-              memberType: 'mtype',
-              role: 'role',
-              term: 'term',
-              term2: 'term2',
+              MyGroupID: 'gid',
+              GroupName: 'gname',
+              GroupNameEng: 'gnameeng',
+              GroupPassword: 'password',
+              JoiningDate: firebase.firestore.FieldValue.serverTimestamp(),
+              MemberType: 'mtype',
+              Role: 'role',
+              Term: 'term',
+              Term2: 'term2',
             })
           );
         });
@@ -123,7 +125,12 @@ describe(testName, () => {
           const usergroups = mygroupsRef(db, authedUserName).doc(invalidUserName);
           let group = correctMyGroup();
 
+          // MyGroupIDはstring
+          group.MyGroupID = 111;
+          await firebase.assertFails(usergroups.set({ ...group }));
+
           // GroupNameはstring
+          group = correctMyGroup();
           group.GroupName = 111;
           await firebase.assertFails(usergroups.set({ ...group }));
 
@@ -210,7 +217,7 @@ describe(testName, () => {
       });
 
       describe('スキーマ検証で失敗', () => {
-        test('スキーマ数が6個じゃないとだめ', async () => {
+        test('スキーマ数が7個じゃないとだめ', async () => {
           const authedUser = authedApp({ uid: authedUserName }, testName);
           const authed = mygroupsRef(authedUser, authedUserName).doc(invalidUserName);
           const group = correctMyGroup();
@@ -304,6 +311,15 @@ describe(testName, () => {
           const group = correctMyGroup();
           await firebase.assertSucceeds(authed.set({ ...group }));
           group.JoiningDate = firebase.firestore.FieldValue.serverTimestamp();
+          await firebase.assertFails(authed.set({ ...group }, { merge: true }));
+        });
+
+        test('MyGroupIDが変更されているとダメ', async () => {
+          const authedUser = authedApp({ uid: authedUserName }, testName);
+          const authed = mygroupsRef(authedUser, authedUserName).doc(invalidUserName);
+          const group = correctMyGroup();
+          await firebase.assertSucceeds(authed.set({ ...group }));
+          group.MyGroupID = `${group.MyGroupID}aaa`
           await firebase.assertFails(authed.set({ ...group }, { merge: true }));
         });
       });

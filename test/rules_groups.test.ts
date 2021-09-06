@@ -116,7 +116,7 @@ describe(testName, () => {
       });
 
       describe('スキーマ検証で失敗', () => {
-        test('スキーマ数が3個じゃないとだめ', async () => {
+        test('スキーマ数が4個じゃないとだめ', async () => {
           const db = authedApp({ uid: authedUserName }, testName);
           const normalRef = groupsRef(db).doc(targetGroupName);
           const group = correctGroup();
@@ -153,6 +153,17 @@ describe(testName, () => {
           const normalRef = groupsRef(db).doc(targetGroupName);
           const group = correctGroup();
           group.GroupPassword = 111;
+          await firebase.assertFails(normalRef.set({ ...group }, { merge: true }));
+        });
+      });
+
+      describe('スキーマ検証で失敗', () => {
+        test('GroupIDが変更されているとダメ', async () => {
+          const db = authedApp({ uid: authedUserName }, testName);
+          const normalRef = groupsRef(db).doc(targetGroupName);
+          const group = correctGroup();
+          await firebase.assertSucceeds(normalRef.set({ ...group }, { merge: true }));
+          group.GroupID = `${group.GroupID}aaa`
           await firebase.assertFails(normalRef.set({ ...group }, { merge: true }));
         });
       });

@@ -23,16 +23,18 @@ service cloud.firestore {
 
     // Userのスキーマ検証
     function isValidUser(user) {
-      return user.size() == 4 // 4つのフィールドを持っている
+      return user.size() == 5 // 5つのフィールドを持っている
+      && 'UserID' in user && user.UserID is string // UserIDがあって、string
       && 'Agreement' in user && user.Agreement is bool // Agreementがあって、boolean
       && 'AgreementDate' in user && user.AgreementDate is timestamp // AgreementDateがあって、timestamp
       && 'AuthStyle' in user && user.AuthStyle is string // AuthStyleがあって、string
       && 'RegistrationDate' in user && user.RegistrationDate is timestamp // RegistrationDateがあって、timestamp
     }
 
-    // User/Groupのスキーマ検証
+    // User/MyGroupのスキーマ検証
     function isValidMyGroup(group) {
-      return group.size() == 7 // 5つのフィールドを持っている
+      return group.size() == 8 // 8つのフィールドを持っている
+      && 'MyGroupID' in group && group.MyGroupID is string // GroupIDがあって、string
       && 'GroupName' in group && group.GroupName is string // GroupNameがあって、string
       && 'GroupNameEng' in group && group.GroupNameEng is string // GroupNameEngがあって、string
       && 'GroupPassword' in group && group.GroupPassword is string // GroupPasswordがあって、string
@@ -51,6 +53,7 @@ service cloud.firestore {
       allow create: if isUserAuthenticated(userID) // ログインとUserIDの判定
       && isValidUser(request.resource.data) // スキーマ検証
       // 以下データのバリデーション
+      && request.auth.uid == request.resource.data.UserID // UserIDが一致
       && request.resource.data.Agreement // Agreementがtrue
       && request.resource.data.AgreementDate < request.time // AgreementDateがrequest.time以前(チェックする→送信の流れなので必ず少し前になる)
       && request.resource.data.RegistrationDate == request.time // 作成時刻はサーバタイムスタンプの値と一致
@@ -59,6 +62,7 @@ service cloud.firestore {
       allow update: if isUserAuthenticated(userID) // ログインとUserIDの判定
       && isValidUser(request.resource.data) // スキーマ検証
       // 以下データのバリデーション
+      && request.resource.data.UserID == resource.data.UserID // UserIDが更新されていない
       && request.resource.data.Agreement // Agreementがtrue
       && request.resource.data.AgreementDate < request.time // AgreementDateがrequest.time以前(チェックする→送信の流れなので必ず少し前になる)
       && request.resource.data.RegistrationDate == resource.data.RegistrationDate; // RegistrationDateは更新されていない
@@ -77,10 +81,11 @@ service cloud.firestore {
         // 以下データのバリデーション
         && request.resource.data.JoiningDate == request.time // 作成時刻はサーバタイムスタンプの値と一致
 
-        // Groups情報を更新できるのは自分だけ、またJoiningDateは更新できない
+        // Groups情報を更新できるのは自分だけ、またJoiningDateとgroupIDは更新できない
         allow update: if isUserAuthenticated(userID) // ログインとUserIDの判定
         && isValidMyGroup(request.resource.data) // スキーマ検証
         // 以下データのバリデーション
+        && request.resource.data.MyGroupID == resource.data.MyGroupID // GroupIDが更新されていない
         && request.resource.data.JoiningDate == resource.data.JoiningDate // JoiningDateは更新されていない
 
         // Groups情報を削除できるのは自分だけ
@@ -97,7 +102,8 @@ service cloud.firestore {
 
       // Groupのスキーマ検証
       function isValidGroup(group) {
-        return group.size() == 3 // 要素は三つ
+        return group.size() == 4 // 要素は4つ
+        && 'GroupID' in group && group.GroupID is string // GroupIDがあって、string
         && 'GroupName' in group && group.GroupName is string // GroupNameがあって、string
         && 'GroupNameEng' in group && group.GroupNameEng is string // GroupNameEngがあって、string
         && 'GroupPassword' in group && group.GroupPassword is string // GroupPasswordがあって、string
@@ -105,7 +111,8 @@ service cloud.firestore {
 
       // Eventのスキーマ検証
       function isValidEvent(event) {
-        return event.size() <= 22 && event.size() >= 15 // 要素は15~22個
+        return event.size() <= 23 && event.size() >= 16 // 要素は15~22個
+        && 'EventID' in event && event.EventID is string // EventIDがあって、string
         && 'EventName' in event && event.EventName is string // EventNameがあって、string
         && 'EventType' in event && event.EventType is string // EventTypeがあって、string
         && (!('EventTypeDetail' in event) || ('EventTypeDetail' in event && event.EventTypeDetail is string)) // EventTypeDetailがあったら、string
@@ -132,7 +139,8 @@ service cloud.firestore {
 
       // Membersのスキーマ検証
       function isValidMember(member) {
-        return member.size() == 5 // 要素は5つ
+        return member.size() == 6 // 要素は6つ
+        && 'MemberID' in member && member.MemberID is string // MemberIDがあって、string
         && 'JoiningDate' in member && member.JoiningDate is timestamp // JoiningDateがあって、timestamp
         && 'MemberName' in member && member.MemberName is string // MemberNameがあって、string
         && 'MemberType' in member && member.MemberType is string // MemberTypeがあって、string
@@ -147,6 +155,8 @@ service cloud.firestore {
       allow update: if isAuthenticated() // ログインしてるかチェック
       && isBelongingGroup(groupID) // 所属しているかチェック
       && isValidGroup(request.resource.data) // スキーマ検証
+      // 以下データのバリデーション
+      && request.resource.data.GroupID == resource.data.GroupID // GroupIDが更新されていない
 
       // Groups情報は現段階では作成、削除ができない
       allow create, delete: if false;
@@ -166,6 +176,7 @@ service cloud.firestore {
         && isBelongingGroup(groupID) // 所属していて
         && request.auth.uid == memberID // 自分自身
         && isValidMember(request.resource.data)
+        && request.resource.data.MemberID == resource.data.MemberID // MemberIDは更新されない
         && request.resource.data.JoiningDate == resource.data.JoiningDate // 作成時刻は更新されない
 
         // 削除はGroupに所属していて自分自身ならできる
@@ -192,11 +203,24 @@ service cloud.firestore {
         && isBelongingGroup(groupID) // 所属している
         && isValidEvent(request.resource.data)
         && request.resource.data.FirstUpdatedOn == resource.data.FirstUpdatedOn // 作成時刻は更新されない
-        && request.resource.data.LastUpdatedOn == request.time; // 更新時刻はサーバタイムスタンプの値と一致
+        && request.resource.data.LastUpdatedOn == request.time // 更新時刻はサーバタイムスタンプの値と一致
+        && request.resource.data.EventID == resource.data.EventID; // EventIDは更新されない
 
         // 削除もGroupに所属しているユーザならできる
         allow delete: if isAuthenticated() // ログインしてて
         && isBelongingGroup(groupID); // 所属している
+      }
+
+      // 連絡について(2021/07/03 杉山追加)
+      // TODO: 実装
+      match /Mails/{mailID} {
+        allow read, create, delete, update: if true;
+      }
+
+      // 演奏曲について(2021/06/12 杉山追加)
+      // TODO: 実装
+      match /Programs/{programID} {
+        allow read, create, delete, update: if true;
       }
     }
   }

@@ -94,6 +94,14 @@ describe(testName, () => {
           await firebase.assertFails(memberRef.set({ ...member, param1: 'aaa' }));
         });
 
+        test('MemberIDがstringじゃなくてアウト', async () => {
+          const db = authedApp({ uid: authedUserName }, testName);
+          const memberRef = membersRef(db, targetGroupName).doc(targetMemberName);
+          const member = correctMember();
+          member.MemberID = 1;
+          await firebase.assertFails(memberRef.set({ ...member }));
+        });
+
         test('MemberNameがstringじゃなくてアウト', async () => {
           const db = authedApp({ uid: authedUserName }, testName);
           const memberRef = membersRef(db, targetGroupName).doc(targetMemberName);
@@ -248,6 +256,17 @@ describe(testName, () => {
           const member = correctMember();
           const { JoiningDate, ...restMember } = member;
           restMember.Role = 111;
+          await firebase.assertFails(normalRef.set({ ...restMember }, { merge: true }));
+        });
+      });
+
+      describe('データ検証で失敗', () => {
+        test('MemberIDが変更されてたらだめ', async () => {
+          const db = authedApp({ uid: authedUserName }, testName);
+          const normalRef = membersRef(db, targetGroupName).doc(targetMemberName);
+          const member = correctMember();
+          const { JoiningDate, ...restMember } = member;
+          restMember.MemberID = `${restMember.MemberID}aaa`;
           await firebase.assertFails(normalRef.set({ ...restMember }, { merge: true }));
         });
       });
