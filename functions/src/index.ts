@@ -10,6 +10,7 @@ db.settings({
   ignoreUndefinedProperties: true,
 });
 
+// テスト
 // Authからユーザが消えたらUsersからも消す
 // 以下実施してからじゃないとダメ
 // firebase login:ci
