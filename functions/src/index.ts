@@ -69,3 +69,52 @@ export const syncGroup = f.firestore.document('Groups/{groupID}').onUpdate((chan
       console.log(error);
     });
 });
+
+// Users以下の出欠情報(MyAttendane)が更新されたら該当するGroups/{groupID}/Events/{eventID}/Attendees/AttendeeDocumentを更新する
+export const syncAttendance = f.firestore.document('Users/{userID}/MyAttendance/{groupID}').onUpdate((change, context) => {
+  // 更新したuserとgroup
+  const userID = context.params.userID;
+  const groupID = context.params.groupID;
+
+  // 更新データ
+  const oldAttendance = change.before.data() as Map<string, attendanceData>;
+  const newAttendance = change.after.data() as Map<string, attendanceData>;
+
+  console.log("type:", typeof newAttendance);
+  console.log("values:", newAttendance.values());
+
+  // 更新データをイベントごとに分割
+  for(const attendance of newAttendance.values()) {
+    console.log(`attendance: ${attendance}`);
+    // 出欠変更のない予定は更新しない
+    const eventID = attendance.EventID;
+    if (oldAttendance.has(eventID)) {
+      const old: attendanceData = oldAttendance.get(eventID)!;
+      if(attendance.Attendance == old.Attendance && attendance.AttendText == old.AttendText) continue;
+    }
+
+    // 更新
+    const eventRef = db.collection('Groups').doc(groupID).collection('Events').doc(eventID).collection('Attendees').doc('AttendeeDocument');
+    const data = attendeeData.apply({
+      AttendeeID: userID,
+      Attendance: attendance.Attendance,
+      AttendText: attendance.AttendText
+    });
+
+    console.log(`data: ${data}`);
+
+    eventRef.set({eventID: data}, {merge: true});
+  }
+});
+
+class attendanceData {
+  EventID = ""
+  Attendance = 0
+  AttendText = ""
+}
+
+class attendeeData {
+  AttendeeID = ""
+  Attendance = 0
+  AttendText = ""
+}
