@@ -77,44 +77,56 @@ export const syncAttendance = f.firestore.document('Users/{userID}/MyAttendance/
   const groupID = context.params.groupID;
 
   // 更新データ
-  const oldAttendance = change.before.data() as Map<string, attendanceData>;
-  const newAttendance = change.after.data() as Map<string, attendanceData>;
+  const oldAttendance = new Map(Object.entries(change.before.data())) as Map<string, AttendanceData>;
+  const newAttendance = new Map(Object.entries(change.after.data())) as Map<string, AttendanceData>;
 
-  console.log("type:", typeof newAttendance);
-  console.log("values:", newAttendance.values());
+  console.log("newAttendance:", JSON.stringify([...newAttendance]));
 
   // 更新データをイベントごとに分割
-  for(const attendance of newAttendance.values()) {
-    console.log(`attendance: ${attendance}`);
+  for (const [_, attendance] of newAttendance) {
+    console.log("attendance:", JSON.stringify(attendance));
     // 出欠変更のない予定は更新しない
     const eventID = attendance.EventID;
     if (oldAttendance.has(eventID)) {
-      const old: attendanceData = oldAttendance.get(eventID)!;
-      if(attendance.Attendance == old.Attendance && attendance.AttendText == old.AttendText) continue;
+      const old: AttendanceData = oldAttendance.get(eventID)!;
+      console.log("old:", JSON.stringify(old));
+      if(attendance.MyAttendanceText === old.MyAttendanceText && attendance.MyAttendanceType === old.MyAttendanceType) {
+        console.log("SAME!!!");
+        continue;
+      }
     }
 
     // 更新
+    console.log("UPDATE!!!");
     const eventRef = db.collection('Groups').doc(groupID).collection('Events').doc(eventID).collection('Attendees').doc('AttendeeDocument');
-    const data = attendeeData.apply({
-      AttendeeID: userID,
-      Attendance: attendance.Attendance,
-      AttendText: attendance.AttendText
-    });
+    const data = new AttendeeData(userID, attendance.MyAttendanceType, attendance.MyAttendanceText);
 
-    console.log(`data: ${data}`);
+    console.log("data:", JSON.stringify(data));
 
-    eventRef.set({eventID: data}, {merge: true});
+    eventRef.set({[eventID]: { ...data }}, {merge: true});
   }
 });
 
-class attendanceData {
+class AttendanceData {
   EventID = ""
-  Attendance = 0
-  AttendText = ""
+  MyAttendanceType = 0
+  MyAttendanceText = ""
+
+  constructor(EventID: string, MyAttendanceType: number, MyAttendanceText: string) {
+    this.EventID = EventID;
+    this.MyAttendanceType = MyAttendanceType;
+    this.MyAttendanceText = MyAttendanceText;
+  }
 }
 
-class attendeeData {
+class AttendeeData {
   AttendeeID = ""
-  Attendance = 0
-  AttendText = ""
+  AttendeeAttendanceType  = 0
+  AttendeeAttendanceText = ""
+
+  constructor(AttendeeID: string, AttendeeAttendanceType: number, AttendeeAttendanceText: string) {
+    this.AttendeeID = AttendeeID;
+    this.AttendeeAttendanceType = AttendeeAttendanceType;
+    this.AttendeeAttendanceText = AttendeeAttendanceText;
+  }
 }
