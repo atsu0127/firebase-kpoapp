@@ -103,7 +103,7 @@ export const syncAttendance = f.firestore.document('Users/{userID}/MyAttendance/
 
     console.log("data:", JSON.stringify(data));
 
-    eventRef.set({[eventID]: { ...data }}, {merge: true});
+    eventRef.set({[userID]: { ...data }}, {merge: true});
   }
 });
 
