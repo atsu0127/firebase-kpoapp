@@ -70,15 +70,35 @@ export const syncGroup = f.firestore.document('Groups/{groupID}').onUpdate((chan
     });
 });
 
+type DocData = admin.firestore.DocumentData;
+type DocSnapshot<T = DocData> = admin.firestore.DocumentSnapshot<T>;
+const writeStatus = (before: DocSnapshot, after: DocSnapshot) => {
+  if (!before.exists) return 'create';
+  if (!after.exists) return 'delete';
+  return 'update';
+};
+
 // Users以下の出欠情報(MyAttendane)が更新されたら該当するGroups/{groupID}/Events/{eventID}/Attendees/AttendeeDocumentを更新する
-export const syncAttendance = f.firestore.document('Users/{userID}/MyAttendance/{groupID}').onUpdate((change, context) => {
+export const syncAttendance = f.firestore.document('Users/{userID}/MyAttendance/{groupID}').onWrite(async (change, context) => {
   // 更新したuserとgroup
   const userID = context.params.userID;
   const groupID = context.params.groupID;
 
-  // 更新データ
-  const oldAttendance = new Map(Object.entries(change.before.data())) as Map<string, AttendanceData>;
-  const newAttendance = new Map(Object.entries(change.after.data())) as Map<string, AttendanceData>;
+  // 更新か削除か新規か判定
+  const { before, after } = change;
+  const status = writeStatus(before, after);
+  let oldAttendance = new Map<string, AttendanceData>();
+  let newAttendance = new Map<string, AttendanceData>();
+  if (status === 'create') {
+    newAttendance = new Map<string, AttendanceData>(Object.entries(change.after.data()!));
+  }
+  if (status === 'update') {
+    oldAttendance = new Map<string, AttendanceData>(Object.entries(change.before.data()!));
+    newAttendance = new Map<string, AttendanceData>(Object.entries(change.after.data()!));
+  }
+  if (status === 'delete') {
+    return;
+  }
 
   console.log("newAttendance:", JSON.stringify([...newAttendance]));
 
@@ -103,7 +123,7 @@ export const syncAttendance = f.firestore.document('Users/{userID}/MyAttendance/
 
     console.log("data:", JSON.stringify(data));
 
-    eventRef.set({[userID]: { ...data }}, {merge: true});
+    await eventRef.set({[userID]: { ...data }}, {merge: true});
   }
 });
 
