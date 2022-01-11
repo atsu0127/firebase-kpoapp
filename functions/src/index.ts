@@ -1,5 +1,6 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
+import { user, userRecordConstructor } from 'firebase-functions/lib/providers/auth';
 
 admin.initializeApp();
 
@@ -150,3 +151,86 @@ class AttendeeData {
     this.AttendeeAttendanceText = AttendeeAttendanceText;
   }
 }
+
+// 予定が登録されたら通知を送る
+export const sendNotification = functions.database.ref('Groups/{groupID}/Events/{eventID}')
+    .onCreate(async (snapshot: any, context: any) => {
+
+      console.log("Event onCreate");
+        
+        // 通知データ
+        const message = {
+            notification: {
+                title: snapshot.val().OwnerName,
+                body: "新しい予定が登録されました",
+                sound: "default",           // 受信時の通知音
+                mutable_content: 'true',    // 画像付きのリッチプッシュに必要
+                content_available: 'true'   // アプリがバックグラウンドでも通知を届けるために必要
+            }
+        };
+        const options = {
+          priority: "high",
+        };
+
+        // 通知を送る対象(Firestoreから所属団員を読み取り)
+        let num = 0
+        const groupID = context.params.groupID;
+        const groupMemberRef = db.collection('Groups').doc(groupID).collection('Members').doc('MemberDocument');
+        groupMemberRef.get()
+          .then((targetDoc) => {
+            if (targetDoc.exists) {
+              
+              console.log("Groups/Members gotten");
+              let dataList = new Map<string, MemberData>();
+              dataList = new Map<string, MemberData>(Object.entries(targetDoc.data()!));
+
+              dataList.forEach((member: MemberData) => {
+                  
+                  console.log("member:", JSON.stringify(member));
+
+                  // ユーザごとにTokenを取得
+                  //admin.auth().getUser(member.MemberID)
+
+                  // ユーザごとにTokenを生成
+                  // ここから先検討中
+                  /*admin.auth().createCustomToken(member.MemberID)
+                    .then((customToken) => {
+
+                        // ユーザごとに通知を送信
+                        if (customToken != "") {
+                          admin.messaging().sendToDevice(customToken, message, options)
+                            .then((response) => {
+                              console.log('Successfully sent message:', response);
+                              //return Promise.resolve(null)
+                            })
+                            .catch((error) => {
+                              console.log('Error sending message:', error);
+                              //return Promise.reject("Error")
+                            });
+                        }
+
+                        //if (num === dataList.size) { return Promise.all(promises) }
+                        num++;
+                    })
+                    .catch((error) => {
+                      console.log('customToken error');
+                      console.log(error);
+                    });*/
+                });
+            }
+          })
+          .catch((error) => {
+            console.log('Groups/Members get error');
+            console.log(error);
+          });
+    });
+
+class MemberData{
+  MemberID = ""
+  MemberName = ""
+
+  constructor(MemberID: string, MemberName: string) {
+    this.MemberID = MemberID;
+    this.MemberName = MemberName;
+  }
+};
