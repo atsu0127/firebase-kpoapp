@@ -1,6 +1,5 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
-import { user, userRecordConstructor } from 'firebase-functions/lib/providers/auth';
 
 admin.initializeApp();
 
@@ -234,3 +233,7 @@ class MemberData{
     this.MemberName = MemberName;
   }
 };
+
+// ユーザ名が変更されたらメンバー名を変更する
+//export const updateMamberNameWhenUserNameChanged = f.auth.user().onDelete(async (user) => {
+//});
