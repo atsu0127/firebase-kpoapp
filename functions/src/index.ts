@@ -153,6 +153,7 @@ class AttendeeData {
 }
 
 // 予定が登録されたら通知を送る
+<<<<<<< HEAD
 export const sendNotification = functions.database.ref('Groups/{groupID}/Events/{eventID}')
 .onCreate(async (snapshot: any, context: any) => {
 
@@ -162,6 +163,14 @@ export const sendNotification = functions.database.ref('Groups/{groupID}/Events/
   const message = {
     notification: {
       title: snapshot.val().OwnerName,
+=======
+export const sendNotification = f.firestore.document('Groups/{groupID}/Events/{eventID}').onWrite(async (change, context) => {
+  console.log("Event onCreate");
+  // 通知データ
+  const message = {
+    notification: {
+      title: change.before.data()!.OwnerName,
+>>>>>>> fd582ac43a436a571be21ea412c505ba2dcf28a1
       body: "新しい予定が登録されました",
       sound: "default",           // 受信時の通知音
       mutable_content: 'true',    // 画像付きのリッチプッシュに必要
@@ -172,6 +181,7 @@ export const sendNotification = functions.database.ref('Groups/{groupID}/Events/
     priority: "high",
   };
 
+<<<<<<< HEAD
   // 通知を送る対象(Firestoreから所属団員を読み取り)
   let num = 0
   const groupID = context.params.groupID;
@@ -228,12 +238,48 @@ export const sendNotification = functions.database.ref('Groups/{groupID}/Events/
 class MemberData {
   MemberID = ""
   MemberName = ""
+=======
+  // 通知を送る対象(Firestoreから所属団員のFCMトークンを読み取り)
+  let num = 1
+  const groupID = context.params.groupID;
+  const memberTokenRef = db.collection('Groups').doc(groupID).collection('Members').doc('TokenDocument');
+  memberTokenRef.get()
+    .then((targetDoc) => {
+      if (targetDoc.exists) {
+        
+        console.log("MemberTokens gotten");
+        let dataList = new Map<string, Map<string, string>>();
+        dataList = new Map<string, Map<string, string>>(Object.entries(targetDoc.data()!));
 
-  constructor(MemberID: string, MemberName: string) {
-    this.MemberID = MemberID;
-    this.MemberName = MemberName;
-  }
-};
+        dataList.forEach((tokenList: Map<string, string>) => {
+          console.log("tokenList:", JSON.stringify(tokenList));
+          
+          tokenList.forEach((token: string) => {
+            console.log("token:", token);
+            
+            if (token != "") {
+              admin.messaging().sendToDevice(token, message, options)
+              .then((response) => {
+                console.log('Successfully sent message:', response);
+                console.log('No. ', num);
+                num++;
+              })
+              .catch((error) => {
+                console.log('Error sending message:', error);
+              });
+            }
+          })
+        })
+      }
+    })
+    .catch((error) => {
+      console.log('MemberTokens get error');
+      console.log(error);
+    });
+});
+
+>>>>>>> fd582ac43a436a571be21ea412c505ba2dcf28a1
+
 
 class DeviceData {
   FirstUpdatedOn = firebase.firestore.FieldValue.serverTimestamp()
