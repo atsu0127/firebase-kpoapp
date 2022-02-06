@@ -1,6 +1,5 @@
 import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
-import * as firebase from "@firebase/testing";
 
 admin.initializeApp();
 
@@ -153,7 +152,7 @@ class AttendeeData {
 }
 
 // 予定が登録されたら通知を送る
-export const sendNotification = f.firestore.document('Groups/{groupID}/Events/{eventID}').onWrite(async (change, context) => {
+export const sendNotification = f.firestore.document('Groups/{groupID}/Events/{eventID}').onWrite((change, context) => {
   console.log("Event onCreate");
   // 通知データ
   const message = {
@@ -178,13 +177,14 @@ export const sendNotification = f.firestore.document('Groups/{groupID}/Events/{e
       if (targetDoc.exists) {
 
         console.log("MemberTokens gotten");
-        let dataList = new Map<string, Map<string, string>>();
-        dataList = new Map<string, Map<string, string>>(Object.entries(targetDoc.data()!));
+        const dataList = new Map<string, Map<string, string>>(Object.entries(targetDoc.data()!));
 
         dataList.forEach((tokenList: Map<string, string>) => {
           console.log("tokenList:", JSON.stringify(tokenList));
 
-          tokenList.forEach((token: string) => {
+          const tokens = new Map<string, string>(Object.entries(tokenList));
+
+          tokens.forEach((token: string) => {
             console.log("token:", token);
 
             if (token != "") {
@@ -209,15 +209,15 @@ export const sendNotification = f.firestore.document('Groups/{groupID}/Events/{e
 });
 
 class DeviceData {
-  FirstUpdatedOn = firebase.firestore.FieldValue.serverTimestamp()
-  LastUpdatedOn = firebase.firestore.FieldValue.serverTimestamp()
+  FirstUpdatedOn = admin.firestore.FieldValue.serverTimestamp()
+  LastUpdatedOn = admin.firestore.FieldValue.serverTimestamp()
   MyDeviceType = ""
   MyFCMToken = ""
   MyUDID = ""
 
   constructor(
-    FirstUpdatedOn: firebase.firestore.Timestamp,
-    LastUpdatedOn: firebase.firestore.Timestamp,
+    FirstUpdatedOn: admin.firestore.Timestamp,
+    LastUpdatedOn: admin.firestore.Timestamp,
     MyDeviceType: string,
     MyFCMToken: string,
     MyUDID: string
@@ -234,7 +234,7 @@ class MyGroup {
   MyGroupID = ""
   MyGroupName = ""
   MyGroupPassword = ""
-  MyJoiningDate = firebase.firestore.FieldValue.serverTimestamp()
+  MyJoiningDate = admin.firestore.FieldValue.serverTimestamp()
   MyMemberType = ""
   MyPart = ""
   MyRole = ""
@@ -243,7 +243,7 @@ class MyGroup {
     MyGroupID: string,
     MyGroupName: string,
     MyGroupPassword: string,
-    MyJoiningDate: firebase.firestore.Timestamp,
+    MyJoiningDate: admin.firestore.Timestamp,
     MyMemberType: string,
     MyPart: string,
     MyRole: string
@@ -258,7 +258,10 @@ class MyGroup {
   }
 }
 
-export const syncToken = f.firestore.document('Users/{userID}/MyDevice/MyDeviceDocument').onWrite(async (change, context) => {
+const mapToObject = (map: Map<string, string>) =>
+  [...map].reduce((l,[k,v]) => Object.assign(l, {[k]:v}), {})
+
+export const syncToken = f.firestore.document('Users/{userID}/MyDevices/MyDeviceDocument').onWrite(async (change, context) => {
   // 更新したuserとgroup
   const userID = context.params.userID;
 
@@ -275,6 +278,7 @@ export const syncToken = f.firestore.document('Users/{userID}/MyDevice/MyDeviceD
     newDev = new Map<string, DeviceData>(Object.entries(change.after.data()!));
   }
   if (status === 'delete') {
+    // TODO: Groups以下のTokenDocumentから削除してく
     return;
   }
 
@@ -283,24 +287,11 @@ export const syncToken = f.firestore.document('Users/{userID}/MyDevice/MyDeviceD
 
   // 更新データをUDIDで分割
   // 更新対象のデバイスを取得
-  let tokenDocument = new Map<string, Map<string, string>>();
   let devices = new Map<string, string>();
   for (const [_, device] of newDev) {
     console.log("device:", JSON.stringify(device));
-    // 出欠変更のない予定は更新しない
-    const deviceUDID = device.MyUDID;
-    if (oldDev.has(deviceUDID)) {
-      const old: DeviceData = oldDev.get(deviceUDID)!;
-      console.log("old:", JSON.stringify(old));
-      if (device.MyFCMToken === old.MyFCMToken && device.MyDeviceType === old.MyDeviceType) {
-        console.log("SAME!!!");
-        continue;
-      }
-    }
-    devices.set(deviceUDID, device.MyFCMToken);
+    devices.set(device.MyUDID, device.MyFCMToken);
   }
-  tokenDocument.set(userID, devices);
-  console.log("tokenDocument:", JSON.stringify([...tokenDocument]));
 
   // 所属グループごとに更新していく
   const myGroupRef = db.collection('Users')
@@ -309,7 +300,7 @@ export const syncToken = f.firestore.document('Users/{userID}/MyDevice/MyDeviceD
   .doc('MyGroupDocument');
 
   myGroupRef.get()
-  .then((querySnapshot) => {
+  .then(async (querySnapshot) => {
     if (querySnapshot.exists) {
       let myGroups = new Map<string, MyGroup>(Object.entries(querySnapshot.data()!));
       for (const [_, group] of myGroups) {
@@ -319,8 +310,9 @@ export const syncToken = f.firestore.document('Users/{userID}/MyDevice/MyDeviceD
         .doc(group.MyGroupID)
         .collection('Members')
         .doc('TokenDocument');
-
-        await tokenRef.set({...tokenDocument}, {merge: true});
+        console.log("devices:", JSON.stringify(mapToObject(devices)));
+        await tokenRef.set({[userID]: admin.firestore.FieldValue.delete()}, {merge: true});
+        await tokenRef.set({[userID]: mapToObject(devices)}, {merge: true});
       }
     } else {
       console.log("There are no groups")
