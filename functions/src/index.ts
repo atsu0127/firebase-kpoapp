@@ -155,9 +155,19 @@ class AttendeeData {
 export const sendNotification = f.firestore.document('Groups/{groupID}/Events/{eventID}').onWrite((change, context) => {
   console.log("Event onCreate");
   // 通知データ
-  const message = {
+  const notifMsg = {
     notification: {
-      title: change.before.data()!.OwnerName,
+      title: change.after.data()!.OwnerName,
+      body: "新しい予定が登録されました",
+      sound: "default",           // 受信時の通知音
+      mutable_content: 'true',    // 画像付きのリッチプッシュに必要
+      content_available: 'true'   // アプリがバックグラウンドでも通知を届けるために必要
+    }
+  };
+  const dataMsg = {
+    data: {
+      ownerID: change.after.data()!.OwnerID,
+      title: change.after.data()!.OwnerName,
       body: "新しい予定が登録されました",
       sound: "default",           // 受信時の通知音
       mutable_content: 'true',    // 画像付きのリッチプッシュに必要
@@ -188,7 +198,17 @@ export const sendNotification = f.firestore.document('Groups/{groupID}/Events/{e
           console.log("token:", token);
 
           if (token != "") {
-            admin.messaging().sendToDevice(token, message, options)
+            admin.messaging().sendToDevice(token, notifMsg, options)
+            .then((response) => {
+              console.log('Successfully sent message:', response);
+              console.log('No. ', num);
+              num++;
+            })
+            .catch((error) => {
+              console.log('Error sending message:', error);
+            });
+
+            admin.messaging().sendToDevice(token, dataMsg, options)
             .then((response) => {
               console.log('Successfully sent message:', response);
               console.log('No. ', num);
