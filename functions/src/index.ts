@@ -173,39 +173,39 @@ export const sendNotification = f.firestore.document('Groups/{groupID}/Events/{e
   const groupID = context.params.groupID;
   const memberTokenRef = db.collection('Groups').doc(groupID).collection('Members').doc('TokenDocument');
   memberTokenRef.get()
-    .then((targetDoc) => {
-      if (targetDoc.exists) {
+  .then((targetDoc) => {
+    if (targetDoc.exists) {
 
-        console.log("MemberTokens gotten");
-        const dataList = new Map<string, Map<string, string>>(Object.entries(targetDoc.data()!));
+      console.log("MemberTokens gotten");
+      const dataList = new Map<string, Map<string, string>>(Object.entries(targetDoc.data()!));
 
-        dataList.forEach((tokenList: Map<string, string>) => {
-          console.log("tokenList:", JSON.stringify(tokenList));
+      dataList.forEach((tokenList: Map<string, string>) => {
+        console.log("tokenList:", JSON.stringify(tokenList));
 
-          const tokens = new Map<string, string>(Object.entries(tokenList));
+        const tokens = new Map<string, string>(Object.entries(tokenList));
 
-          tokens.forEach((token: string) => {
-            console.log("token:", token);
+        tokens.forEach((token: string) => {
+          console.log("token:", token);
 
-            if (token != "") {
-              admin.messaging().sendToDevice(token, message, options)
-              .then((response) => {
-                console.log('Successfully sent message:', response);
-                console.log('No. ', num);
-                num++;
-              })
-              .catch((error) => {
-                console.log('Error sending message:', error);
-              });
-            }
-          })
+          if (token != "") {
+            admin.messaging().sendToDevice(token, message, options)
+            .then((response) => {
+              console.log('Successfully sent message:', response);
+              console.log('No. ', num);
+              num++;
+            })
+            .catch((error) => {
+              console.log('Error sending message:', error);
+            });
+          }
         })
-      }
-    })
-    .catch((error) => {
-      console.log('MemberTokens get error');
-      console.log(error);
-    });
+      })
+    }
+  })
+  .catch((error) => {
+    console.log('MemberTokens get error');
+    console.log(error);
+  });
 });
 
 class DeviceData {
@@ -259,7 +259,7 @@ class MyGroup {
 }
 
 const mapToObject = (map: Map<string, string>) =>
-  [...map].reduce((l,[k,v]) => Object.assign(l, {[k]:v}), {})
+  [...map].reduce((l, [k, v]) => Object.assign(l, {[k]: v}), {})
 
 export const syncToken = f.firestore.document('Users/{userID}/MyDevices/MyDeviceDocument').onWrite(async (change, context) => {
   // 更新したuserとgroup
@@ -268,6 +268,7 @@ export const syncToken = f.firestore.document('Users/{userID}/MyDevices/MyDevice
   // 更新か削除か新規か判定
   const {before, after} = change;
   const status = writeStatus(before, after);
+  let deleteFlg = false;
   let oldDev = new Map<string, DeviceData>();
   let newDev = new Map<string, DeviceData>();
   if (status === 'create') {
@@ -278,8 +279,7 @@ export const syncToken = f.firestore.document('Users/{userID}/MyDevices/MyDevice
     newDev = new Map<string, DeviceData>(Object.entries(change.after.data()!));
   }
   if (status === 'delete') {
-    // TODO: Groups以下のTokenDocumentから削除してく
-    return;
+    deleteFlg = true;
   }
 
   console.log("device update\nnew:", JSON.stringify([...newDev]));
@@ -288,9 +288,11 @@ export const syncToken = f.firestore.document('Users/{userID}/MyDevices/MyDevice
   // 更新データをUDIDで分割
   // 更新対象のデバイスを取得
   let devices = new Map<string, string>();
-  for (const [_, device] of newDev) {
-    console.log("device:", JSON.stringify(device));
-    devices.set(device.MyUDID, device.MyFCMToken);
+  if (!deleteFlg) {
+    for (const [_, device] of newDev) {
+      console.log("device:", JSON.stringify(device));
+      devices.set(device.MyUDID, device.MyFCMToken);
+    }
   }
 
   // 所属グループごとに更新していく
@@ -310,9 +312,12 @@ export const syncToken = f.firestore.document('Users/{userID}/MyDevices/MyDevice
         .doc(group.MyGroupID)
         .collection('Members')
         .doc('TokenDocument');
-        console.log("devices:", JSON.stringify(mapToObject(devices)));
         await tokenRef.set({[userID]: admin.firestore.FieldValue.delete()}, {merge: true});
-        await tokenRef.set({[userID]: mapToObject(devices)}, {merge: true});
+
+        if (!deleteFlg) {
+          console.log("devices:", JSON.stringify(mapToObject(devices)));
+          await tokenRef.set({[userID]: mapToObject(devices)}, {merge: true});
+        }
       }
     } else {
       console.log("There are no groups")
