@@ -153,24 +153,12 @@ class AttendeeData {
 }
 
 // 予定が登録されたら通知を送る
-<<<<<<< HEAD
-export const sendNotification = functions.database.ref('Groups/{groupID}/Events/{eventID}')
-.onCreate(async (snapshot: any, context: any) => {
-
-  console.log("Event onCreate");
-
-  // 通知データ
-  const message = {
-    notification: {
-      title: snapshot.val().OwnerName,
-=======
 export const sendNotification = f.firestore.document('Groups/{groupID}/Events/{eventID}').onWrite(async (change, context) => {
   console.log("Event onCreate");
   // 通知データ
   const message = {
     notification: {
       title: change.before.data()!.OwnerName,
->>>>>>> fd582ac43a436a571be21ea412c505ba2dcf28a1
       body: "新しい予定が登録されました",
       sound: "default",           // 受信時の通知音
       mutable_content: 'true',    // 画像付きのリッチプッシュに必要
@@ -181,64 +169,6 @@ export const sendNotification = f.firestore.document('Groups/{groupID}/Events/{e
     priority: "high",
   };
 
-<<<<<<< HEAD
-  // 通知を送る対象(Firestoreから所属団員を読み取り)
-  let num = 0
-  const groupID = context.params.groupID;
-  const groupMemberRef = db.collection('Groups').doc(groupID).collection('Members').doc('MemberDocument');
-  groupMemberRef.get()
-  .then((targetDoc) => {
-    if (targetDoc.exists) {
-
-      console.log("Groups/Members gotten");
-      let dataList = new Map<string, MemberData>();
-      dataList = new Map<string, MemberData>(Object.entries(targetDoc.data()!));
-
-      dataList.forEach((member: MemberData) => {
-
-        console.log("member:", JSON.stringify(member));
-
-        // ユーザごとにTokenを取得
-        //admin.auth().getUser(member.MemberID)
-
-        // ユーザごとにTokenを生成
-        // ここから先検討中
-        /*admin.auth().createCustomToken(member.MemberID)
-          .then((customToken) => {
-
-              // ユーザごとに通知を送信
-              if (customToken != "") {
-                admin.messaging().sendToDevice(customToken, message, options)
-                  .then((response) => {
-                    console.log('Successfully sent message:', response);
-                    //return Promise.resolve(null)
-                  })
-                  .catch((error) => {
-                    console.log('Error sending message:', error);
-                    //return Promise.reject("Error")
-                  });
-              }
-
-              //if (num === dataList.size) { return Promise.all(promises) }
-              num++;
-          })
-          .catch((error) => {
-            console.log('customToken error');
-            console.log(error);
-          });*/
-      });
-    }
-  })
-  .catch((error) => {
-    console.log('Groups/Members get error');
-    console.log(error);
-  });
-});
-
-class MemberData {
-  MemberID = ""
-  MemberName = ""
-=======
   // 通知を送る対象(Firestoreから所属団員のFCMトークンを読み取り)
   let num = 1
   const groupID = context.params.groupID;
@@ -246,17 +176,17 @@ class MemberData {
   memberTokenRef.get()
     .then((targetDoc) => {
       if (targetDoc.exists) {
-        
+
         console.log("MemberTokens gotten");
         let dataList = new Map<string, Map<string, string>>();
         dataList = new Map<string, Map<string, string>>(Object.entries(targetDoc.data()!));
 
         dataList.forEach((tokenList: Map<string, string>) => {
           console.log("tokenList:", JSON.stringify(tokenList));
-          
+
           tokenList.forEach((token: string) => {
             console.log("token:", token);
-            
+
             if (token != "") {
               admin.messaging().sendToDevice(token, message, options)
               .then((response) => {
@@ -277,9 +207,6 @@ class MemberData {
       console.log(error);
     });
 });
-
->>>>>>> fd582ac43a436a571be21ea412c505ba2dcf28a1
-
 
 class DeviceData {
   FirstUpdatedOn = firebase.firestore.FieldValue.serverTimestamp()
@@ -403,9 +330,7 @@ export const syncToken = f.firestore.document('Users/{userID}/MyDevice/MyDeviceD
     console.log('MyGroups get error');
     console.log(error);
   });
-
-
-}
+});
 
 // ユーザ名が変更されたらメンバー名を変更する
 //export const updateMamberNameWhenUserNameChanged = f.auth.user().onDelete(async (user) => {
