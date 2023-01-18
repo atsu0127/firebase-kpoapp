@@ -23,17 +23,24 @@ export const notifyMail = f.firestore.document('Groups/{groupID}/Mails/{mailID}'
 //****************************** （共通関数）通知を送る ******************************//
 const sendNotification = async (change: Change<DocSnapshot>, context: EventContext, type: String) => {
   
+  //============================== テストグループでは通知をしない ==============================//
+  const groupID = context.params.groupID;
+  if (groupID === 'test_free') {
+    console.log('Noification is not sent.');
+    return;
+  };
+
   //============================== 新規/更新/削除を判定 ==============================//
   let bodyText = '';
   const {before, after} = change;
   const status = writeStatus(before, after);
   if (status === 'create') {
-    if(type === 'Event') bodyText = '新しい予定が登録されました';
-    if(type === 'Mail') bodyText = '新しい連絡が投稿されました';
+    if(type === 'Event') bodyText = `新しい予定が登録されました: ${change.after.data()!.EventName}`;
+    if(type === 'Mail') bodyText = `新しい連絡が投稿されました: ${change.after.data()!.MailName}`;
   };
   if (status === 'update') {
-    if(type === 'Event') bodyText = '予定が更新されました';
-    if(type === 'Mail') bodyText = '連絡が更新されました';
+    if(type === 'Event') bodyText = `予定が更新されました: ${change.after.data()!.EventName}`;
+    if(type === 'Mail') bodyText = `連絡が更新されました: ${change.after.data()!.MailName}`;
   };
   if (status === 'delete') {
     return;
@@ -64,7 +71,6 @@ const sendNotification = async (change: Change<DocSnapshot>, context: EventConte
   };
 
   //============================== 通知を送る対象デバイス(楽団員のFCMトークン)をFirestoreから読み取り) ==============================//
-  const groupID = context.params.groupID;
   const lastUpdatedByID = change.after.data()!.LastUpdatedByID;
   //console.log('LastUpdatedByID: ', lastUpdatedByID);
   const memberTokenRef = db.collection('Groups').doc(groupID).collection('Members').doc('TokenDocument');
@@ -123,6 +129,6 @@ const sendNotification = async (change: Change<DocSnapshot>, context: EventConte
     });
   })
   .catch((error) => {
-    console.log('<ERROR> Member tokens ', error);
+    console.log('<ERROR> Member tokens: ', error);
   });
 };
